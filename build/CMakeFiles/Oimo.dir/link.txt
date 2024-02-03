@@ -1,0 +1,2 @@
+/usr/bin/ar qc libOimo.a CMakeFiles/Oimo.dir/Oimo.cpp.o
+/usr/bin/ranlib libOimo.a

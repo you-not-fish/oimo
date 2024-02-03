@@ -1,0 +1,7 @@
+[
+{
+  "directory": "/root/cpp/oimo/build",
+  "command": "/usr/bin/g++   -g -o CMakeFiles/Oimo.dir/Oimo.cpp.o -c /root/cpp/oimo/Oimo.cpp",
+  "file": "/root/cpp/oimo/Oimo.cpp"
+}
+]

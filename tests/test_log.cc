@@ -2,6 +2,8 @@
 #include <thread>
 #include "../src/log.h"
 #include "../src/logThread.h"
+#include "../src/config.h"
+#include "../src/singleton.h"
 
 using namespace Oimo;
 
@@ -26,11 +28,16 @@ int main() {
     Logger::setLogLevel(LogLevel::DEBUG);
     test();
     std::vector<std::thread> threads;
-    for (int i = 0; i < 40; ++i) {
+    for (int i = 0; i < 2; ++i) {
         threads.push_back(std::thread(threadFunc, i));
     }
+    LOG_INFO << Singleton<Config>::instance().map().size();
     for (auto& t : threads) {
         t.join();
+    }
+
+    for (auto& it: Singleton<Config>::instance().map()) {
+        LOG_INFO << it.first << " " << it.second;
     }
     return 0;
 }

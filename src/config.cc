@@ -4,11 +4,14 @@ namespace Oimo {
     {
         //get filename from env
         char* filename = std::getenv("OIMO_CONFIG");
-        if (!filename)
+        if (filename)
         {
-            filename = "config.yaml";
+            load(filename);
         }
-        load(filename);
+        else
+        {
+            load("config.yaml");
+        }
     }
 
     Config::~Config()
@@ -17,17 +20,11 @@ namespace Oimo {
 
     void Config::load(const std::string& filename)
     {
+        fprintf(stdout, "Loading config from %s\n", filename.c_str());
         std::lock_guard<std::mutex> lock(m_mutex);
         m_map.clear();
-        try
-        {
-            YAML::Node config = YAML::LoadFile(filename);
-            loadToMap("", config);
-        }
-        catch(const std::exception& e)
-        {
-            fprintf(stderr, "Failed to load config file: %s\n", e.what());
-        }
+        YAML::Node node = YAML::LoadFile(filename);
+        loadToMap("", node);
     }
 
     void Config::loadToMap(const std::string& prefix, const YAML::Node& node)
@@ -59,6 +56,10 @@ namespace Oimo {
             {
                 loadToMap(prefix + "[" + std::to_string(i) + "]", node[i]);
             }
+        }
+        else
+        {
+            fprintf(stderr, "Invalid node type\n");
         }
     }
 

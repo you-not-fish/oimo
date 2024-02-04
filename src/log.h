@@ -4,6 +4,7 @@
 #include <memory>
 #include <vector>
 #include <mutex>
+#include <condition_variable>
 #include <string.h>
 
 namespace Oimo {
@@ -38,6 +39,13 @@ namespace Oimo {
             std::copy(data, data + len, m_buffer + m_offset);
             m_offset += len;
         }
+
+        std::string toString() const {
+            return std::string(m_buffer, m_offset);
+        }
+
+        char* data() { return m_buffer; }
+        int length() const { return m_offset; }
     private:
         char m_buffer[1024];
         int m_offset{0};
@@ -108,18 +116,63 @@ namespace Oimo {
     public:
         Logger(LogLevel level, const char* file, int line, const char* func);
         ~Logger();
-        static LogLevel logLevel() { return g_logLevel; }
-        static void setLogLevel(LogLevel level) {
-            g_logLevel = level;
-        }
+        static LogLevel logLevel();
+        static void setLogLevel(LogLevel level);
 
         LogStream& stream() { return m_stream; }
     private:
+        void logTime();
         LogStream m_stream;
     };
 
     
+    #define LOG_WITH_LEVEL(level) \
+        if (level >= Oimo::Logger::logLevel()) \
+            Oimo::Logger(level, __FILE__, __LINE__, __func__).stream()
+
+    #define LOG_TRACE LOG_WITH_LEVEL(Oimo::LogLevel::TRACE)
+    #define LOG_DEBUG LOG_WITH_LEVEL(Oimo::LogLevel::DEBUG)
+    #define LOG_INFO LOG_WITH_LEVEL(Oimo::LogLevel::INFO)
+    #define LOG_WARN LOG_WITH_LEVEL(Oimo::LogLevel::WARN)
+    #define LOG_ERROR LOG_WITH_LEVEL(Oimo::LogLevel::ERROR)
+    #define LOG_FATAL LOG_WITH_LEVEL(Oimo::LogLevel::FATAL)
+
+    class LogFile {
+    public:
+        using uPtr = std::unique_ptr<LogFile>;
+        LogFile(const std::string& fileName);
+        ~LogFile();
+        void append(const char* data, int len);
+        void flush();
+        void rollFile();
+
+        int rollPerSeconds() const { return m_rollPerSeconds; }
+        void setRollPerSeconds(int rollPerSeconds) { m_rollPerSeconds = rollPerSeconds; }
+        int flushInterval() const { return m_flushInterval; }
+        void setFlushInterval(int flushInterval) { m_flushInterval = flushInterval; }
+        int checkEveryN() const { return m_checkEveryN; }
+        void setCheckEveryN(int checkEveryN) { m_checkEveryN = checkEveryN; }
+        int rollSize() const { return m_rollSize; }
+        void setRollSize(int rollSize) { m_rollSize = rollSize; }
+
+    private:
+        void writeToFile(const char* data, int len);
+        std::string formatFileName(time_t now);
+        std::string m_fileName;
+        FILE* m_fp;
+        time_t m_lastFlushTime;
+        time_t m_lastRollTime;
+        time_t m_startOfPeriod;
+        off_t m_writtenBytes;
+        int m_count{0};
+        int m_rollPerSeconds {60 * 60 * 24};
+        int m_flushInterval {3};
+        int m_checkEveryN {1024};
+        int m_rollSize {1024 * 1024};
+    };
+
     extern LogLevel g_logLevel;
     extern std::mutex g_logMutex;
+    extern std::condition_variable g_logCond;
     extern std::vector<LogBuffer::sPtr> g_logBuffers;
 }

@@ -41,7 +41,7 @@ namespace Oimo {
     void LogThread::stop()
     {
         m_running = false;
-        m_thread.stop();
+        m_thread.join();
     }
 
     void LogThread::threadFunc()

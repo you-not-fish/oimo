@@ -21,8 +21,8 @@ namespace Oimo {
         switch (level) {
             case LogLevel::TRACE: return "TRACE";
             case LogLevel::DEBUG: return "DEBUG";
-            case LogLevel::INFO: return "INFO ";
-            case LogLevel::WARN: return "WARN ";
+            case LogLevel::INFO: return "INFO";
+            case LogLevel::WARN: return "WARN";
             case LogLevel::ERROR: return "ERROR";
             case LogLevel::FATAL: return "FATAL";
             default: return "UNKNOWN";
@@ -33,7 +33,7 @@ namespace Oimo {
     public:
         using sPtr = std::shared_ptr<LogBuffer>;
         void append(const char* data, int len) {
-            if (m_offset + len > sizeof(m_buffer)) {
+            if (m_offset + len > static_cast<int>(sizeof(m_buffer))) {
                 return;
             }
             std::copy(data, data + len, m_buffer + m_offset);

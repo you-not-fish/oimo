@@ -9,7 +9,7 @@
 #include "thread.h"
 
 namespace Oimo {
-    class LogThread {
+    class LogThread : noncopyable {
     public:
         LogThread();
         ~LogThread();
@@ -18,8 +18,8 @@ namespace Oimo {
     private:
         void threadFunc();
         std::vector<LogBuffer::sPtr> m_buffers;
-        Thread m_thread;
         bool m_running;
+        Thread m_thread;
         LogFile::uPtr m_file;\
         bool m_appendToFile;
         bool m_appendToStdout;

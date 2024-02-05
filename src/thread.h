@@ -7,17 +7,19 @@
 #include <functional>
 #include <unistd.h>
 #include "log.h"
+#include "noncopyable.h"
 
 namespace Oimo {
     extern thread_local pid_t t_currentThreadID;
     extern thread_local std::string t_currentThreadName;
 
-    class Thread {
+    class Thread : noncopyable {
     public:
         using sPtr = std::shared_ptr<Thread>;
+        using uPtr = std::unique_ptr<Thread>;
         using ThreadFunc = std::function<void()>;
 
-        Thread(ThreadFunc func, const std::string& name = std::string())
+        Thread(ThreadFunc func = nullptr, const std::string& name = std::string())
             : m_name(name)
             , m_func(func)
         {
@@ -25,10 +27,10 @@ namespace Oimo {
 
         ~Thread();
         void start();
-        void stop();
         void join();
         const std::string& name() const { return m_name; }
         void setName(const std::string& name) { m_name = name; }
+        void setFunc(ThreadFunc func) { m_func = func; }
         static pid_t currentThreadID() { return t_currentThreadID; }
         static const std::string& currentThreadName() { return t_currentThreadName; }
         static bool isMainThread() { return currentThreadID() == ::getpid(); }

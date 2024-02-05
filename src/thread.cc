@@ -9,27 +9,24 @@ namespace Oimo {
 
     Thread::~Thread() {
         if (m_state == ThreadState::RUNNING) {
-            stop();
+            join();
         }
     }
 
     void Thread::start() {
         assert(m_state == ThreadState::INIT);
+        assert(m_func);
         m_thread = std::thread(run, this);
         std::unique_lock<std::mutex> lock(m_mutex);
         m_cond.wait(lock);
     }
 
-    void Thread::stop() {
-        assert(m_state != ThreadState::INIT);
-        join();
-        m_state = ThreadState::STOPPED;
-    }
-
     void Thread::join() {
+        assert(m_state != ThreadState::INIT);
         if (m_thread.joinable()) {
             m_thread.join();
         }
+        m_state = ThreadState::STOPPED;
     }
 
     void Thread::run(void* arg) {
@@ -41,6 +38,5 @@ namespace Oimo {
         self->m_state = ThreadState::RUNNING;
         self->m_cond.notify_one();
         self->m_func();
-        self->m_state = ThreadState::STOPPED;
     }
 } // namespace Oimo

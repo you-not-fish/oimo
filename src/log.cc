@@ -8,6 +8,7 @@
 #include <cstdio>
 #include <errno.h>
 #include "log.h"
+#include "thread.h"
 
 namespace Oimo {
     LogLevel g_logLevel = LogLevel::INFO;
@@ -19,7 +20,12 @@ namespace Oimo {
         : m_stream() {
         logTime();
         m_stream << " [" << logLevelToString(level) << "] ";
-        m_stream << file << ":" << line << " " << func << " ";
+        m_stream << Thread::currentThreadName() << " ";
+        m_stream << Thread::currentThreadID() << " ";
+        // get file basename
+        const char* slash = strrchr(file, '/');
+        const char* basename = (slash != nullptr) ? slash + 1 : file;
+        m_stream << basename << ":" << line << " " << func << " ";
     }
 
     Logger::~Logger() {

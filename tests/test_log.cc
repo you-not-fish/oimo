@@ -8,10 +8,12 @@
 using namespace Oimo;
 
 void test() {
+    LOG_TRACE << std::string("this is a string");
     LOG_INFO << 1;
-    LOG_INFO << 2.5;
-    LOG_INFO << 'a';
-    LOG_INFO << "Hello, world!";
+    LOG_WARN << 2.5;
+    LOG_ERROR << 'a';
+    LOG_DEBUG << "Hello, world!";
+    LOG_FATAL << "Goodbye, world!";
 
 }
 
@@ -22,16 +24,14 @@ void threadFunc(int i) {
 int main() {
     LogThread logThread;
     logThread.start();
-    LOG_INFO << "Hello, world!";
-    LOG_DEBUG << "Hello, world!";
-    LOG_ERROR << "Hello, world!";
     Logger::setLogLevel(LogLevel::DEBUG);
     test();
     std::vector<std::thread> threads;
     for (int i = 0; i < 2; ++i) {
         threads.push_back(std::thread(threadFunc, i));
     }
-    LOG_INFO << Singleton<Config>::instance().map().size();
+    LOG_INFO << "config count : "
+            << Singleton<Config>::instance().map().size();
     for (auto& t : threads) {
         t.join();
     }

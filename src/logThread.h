@@ -4,9 +4,9 @@
 #include <memory>
 #include <vector>
 #include <mutex>
-#include <thread>
 #include <condition_variable>
 #include "log.h"
+#include "thread.h"
 
 namespace Oimo {
     class LogThread {
@@ -18,9 +18,10 @@ namespace Oimo {
     private:
         void threadFunc();
         std::vector<LogBuffer::sPtr> m_buffers;
-        std::thread m_thread;
+        Thread m_thread;
         bool m_running;
-        std::mutex m_mutex;
-        std::condition_variable m_cond;
+        LogFile::uPtr m_file;\
+        bool m_appendToFile;
+        bool m_appendToStdout;
     };
 }

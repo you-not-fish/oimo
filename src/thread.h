@@ -1,4 +1,5 @@
 #pragma once
+#include <atomic>
 #include <string>
 #include <memory>
 #include <thread>
@@ -47,6 +48,6 @@ namespace Oimo {
         std::thread m_thread;
         std::mutex m_mutex;
         std::condition_variable m_cond;
-        ThreadState m_state{ThreadState::INIT};
+        std::atomic<ThreadState> m_state{ThreadState::INIT};
     };
 } // namespace Oimo

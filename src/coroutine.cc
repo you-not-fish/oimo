@@ -1,4 +1,5 @@
 #include <cassert>
+#include "log.h"
 #include "coroutine.h"
 
 namespace Oimo {
@@ -26,19 +27,48 @@ namespace Oimo {
     }
 
     void Coroutine::resume(Coroutine::sPtr coroutine) {
-        assert(coroutine);
-        assert(coroutine->m_state == CoroutineState::SUSPENDED);
+        if (coroutine == t_mainCoroutine) {
+            LOG_FATAL << "Main coroutine should never be resumed";
+        }
+        if (t_currentCoroutine != t_mainCoroutine) {
+            LOG_FATAL << "Coroutine should never be resumed in another coroutine";
+        }
+        if (coroutine->m_state == CoroutineState::RUNNING) {
+            LOG_FATAL << "Coroutine should never be resumed when running";
+        }
+        if (coroutine->m_state == CoroutineState::STOPPED) {
+            LOG_FATAL << "Coroutine should never be resumed when stopped";
+        }
         coroutine->m_state = CoroutineState::RUNNING;
-        coctx_swap(&t_currentCoroutine->m_ctx, &coroutine->m_ctx);
+        setCurrentCoroutine(coroutine);
+        coctx_swap(&t_mainCoroutine->m_ctx, &coroutine->m_ctx);
+    }
+
+    bool Coroutine::isMainCoroutine() {
+        return t_currentCoroutine == t_mainCoroutine;
     }
 
     void Coroutine::yieldToSuspend() {
+        if (isMainCoroutine()) {
+            LOG_FATAL << "Main coroutine should never yield";
+        }
+        if (t_currentCoroutine->m_state != CoroutineState::RUNNING) {
+            LOG_FATAL << "Coroutine should never yield when not running";
+        }
         t_currentCoroutine->m_state = CoroutineState::SUSPENDED;
+        setCurrentCoroutine(t_mainCoroutine);
         coctx_swap(&t_currentCoroutine->m_ctx, &t_mainCoroutine->m_ctx);
     }
 
     void Coroutine::yieldToStopped() {
+        if (isMainCoroutine()) {
+            LOG_FATAL << "Main coroutine should never yield";
+        }
+        if (t_currentCoroutine->m_state != CoroutineState::RUNNING) {
+            LOG_FATAL << "Coroutine should never yield when not running";
+        }
         t_currentCoroutine->m_state = CoroutineState::STOPPED;
+        setCurrentCoroutine(t_mainCoroutine);
         coctx_swap(&t_currentCoroutine->m_ctx, &t_mainCoroutine->m_ctx);
     }
 
@@ -59,6 +89,12 @@ namespace Oimo {
     }
 
     void Coroutine::run(Coroutine::sPtr self) {
-        assert(m_state == CoroutineState::INIT);
+        assert(self);
+        assert(self->m_state == CoroutineState::RUNNING);
+        assert(self == t_currentCoroutine);
+        self->m_func();
+        yieldToStopped();
+        LOG_FATAL << "Coroutine should never reach here";
+
     }
 }

@@ -1,5 +1,6 @@
 #include "config.h"
 #include "thread.h"
+#include "coroutine.h"
 #include "logThread.h"
 #include <unistd.h>
 #include <cassert>
@@ -12,6 +13,8 @@ namespace Oimo {
         Singleton<Config>::instance();
         Thread::setCurrentThreadID(syscall(SYS_gettid));
         Thread::setCurrentThreadName("main");
+        Coroutine::t_mainCoroutine = std::make_shared<Coroutine>();
+        Coroutine::setCurrentCoroutine(Coroutine::t_mainCoroutine);
         Singleton<LogThread>::instance().start();
     }
 }

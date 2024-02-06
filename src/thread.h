@@ -33,7 +33,7 @@ namespace Oimo {
         static pid_t currentThreadID() { return t_currentThreadID; }
         static const std::string& currentThreadName() { return t_currentThreadName; }
         static bool isMainThread() { return currentThreadID() == ::getpid(); }
-        enum class ThreadState {
+        enum class ThreadState : int {
             INIT,
             RUNNING,
             STOPPED

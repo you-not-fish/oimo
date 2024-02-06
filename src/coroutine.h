@@ -25,6 +25,7 @@ namespace Oimo {
             STOPPED
         };
         void reset(CoroutineFunc func, uint32_t stackSize = 0);
+        static bool isMainCoroutine();
         static void resume(Coroutine::sPtr coroutine);
         static void yieldToSuspend();
         static void yieldToStopped();

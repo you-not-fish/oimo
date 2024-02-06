@@ -8,10 +8,10 @@
 
 namespace Oimo {
     void initOimo() {
-        assert(t_currentThreadID == 0);
+        assert(Thread::currentThreadID() == 0);
         Singleton<Config>::instance();
-        t_currentThreadID = ::syscall(SYS_gettid);
-        t_currentThreadName = "main";
+        Thread::setCurrentThreadID(syscall(SYS_gettid));
+        Thread::setCurrentThreadName("main");
         Singleton<LogThread>::instance().start();
     }
 }

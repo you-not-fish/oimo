@@ -122,6 +122,7 @@ namespace Oimo {
         LogStream& stream() { return m_stream; }
     private:
         void logTime();
+        LogLevel m_level;
         LogStream m_stream;
     };
 

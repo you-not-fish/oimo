@@ -23,8 +23,13 @@ namespace Oimo {
         fprintf(stdout, "Loading config from %s\n", filename.c_str());
         std::lock_guard<std::mutex> lock(m_mutex);
         m_map.clear();
-        YAML::Node node = YAML::LoadFile(filename);
-        loadToMap("", node);
+        try {
+            YAML::Node node = YAML::LoadFile(filename);
+            loadToMap("", node);
+        }
+        catch (const YAML::Exception& e) {
+            fprintf(stderr, "YAML::Exception: %s\n", e.what());
+        }
     }
 
     void Config::loadToMap(const std::string& prefix, const YAML::Node& node)

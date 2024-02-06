@@ -5,8 +5,8 @@
 #include "coroutine.h"
 
 namespace Oimo {
-    int Thread::t_currentThreadID = 0;
-    std::string Thread::t_currentThreadName = "unknown";
+    thread_local int Thread::t_currentThreadID = 0;
+    thread_local std::string Thread::t_currentThreadName = "unknown";
 
     Thread::~Thread() {
         if (m_state == ThreadState::RUNNING) {
@@ -30,14 +30,14 @@ namespace Oimo {
         m_state = ThreadState::STOPPED;
     }
 
-    void Thread::run(Coroutine::sPtr self) {
+    void Thread::run(Thread::sPtr self) {
         assert(self);
         assert(self->m_state == ThreadState::INIT);
         t_currentThreadID = syscall(SYS_gettid);
         if (!self->m_name.empty()) {
             t_currentThreadName = self->m_name;
         }
-        Coroutine::t_mainCoroutine = std::make_shared<Coroutine>();
+        Coroutine::t_mainCoroutine.reset(new Coroutine());
         Coroutine::setCurrentCoroutine(Coroutine::t_mainCoroutine);
         self->m_state = ThreadState::RUNNING;
         self->m_cond.notify_one();

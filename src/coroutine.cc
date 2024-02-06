@@ -1,21 +1,56 @@
 #include <cassert>
 #include "log.h"
+#include "singleton.h"
+#include "config.h"
 #include "coroutine.h"
 
 namespace Oimo {
-    uint64_t Coroutine::t_coroutineID = 0;
-    Coroutine::sPtr Coroutine::t_currentCoroutine = nullptr;
-    Coroutine::sPtr Coroutine::t_mainCoroutine = nullptr;
+    thread_local uint64_t Coroutine::t_coroutineID = 0;
+    thread_local Coroutine::sPtr Coroutine::t_currentCoroutine = nullptr;
+    thread_local Coroutine::sPtr Coroutine::t_mainCoroutine = nullptr;
+
+    Coroutine::Coroutine(CoroutineFunc func, uint32_t stackSize)
+        : m_func(func)
+        , m_state(CoroutineState::INIT) {
+        assert(t_mainCoroutine);
+        m_id = t_coroutineID++;
+        m_stackSize = stackSize ? stackSize :
+            Singleton<Config>::instance().get<uint32_t>(
+                "coroutine.stack_size", 1024 * 1024);
+        m_stack = new char[m_stackSize];
+        m_stackTop = m_stack + m_stackSize;
+
+        memset(&m_ctx, 0, sizeof(m_ctx));
+
+        m_ctx.regs[static_cast<int>(Register::kRSP)]
+            = m_stackTop;
+        m_ctx.regs[static_cast<int>(Register::kRBP)]
+            = m_stackTop;
+        m_ctx.regs[static_cast<int>(Register::kRETAddr)]
+            = reinterpret_cast<char*>(run);
+        m_ctx.regs[static_cast<int>(Register::kRDI)]
+            = reinterpret_cast<char*>(this);
+    }
 
     Coroutine::Coroutine() {
         assert(t_coroutineID == 0);
         m_id = t_coroutineID++;
+        m_stackSize = 0;
+        m_state = CoroutineState::RUNNING;
     }
 
     Coroutine::~Coroutine() {
-        if (m_state == CoroutineState::RUNNING) {
-            
+        if (!isMainCoroutine() &&
+            m_state == CoroutineState::RUNNING) {
+            LOG_ERROR << "Coroutine is still running when destroyed";
         }
+        if (m_stack) {
+            delete[] m_stack;
+        }
+    }
+
+    void Coroutine::resume() {
+        resume(shared_from_this());
     }
 
     void Coroutine::reset(CoroutineFunc func, uint32_t stackSize) {
@@ -55,9 +90,10 @@ namespace Oimo {
         if (t_currentCoroutine->m_state != CoroutineState::RUNNING) {
             LOG_FATAL << "Coroutine should never yield when not running";
         }
-        t_currentCoroutine->m_state = CoroutineState::SUSPENDED;
+        auto cor = t_currentCoroutine;
+        cor->m_state = CoroutineState::SUSPENDED;
         setCurrentCoroutine(t_mainCoroutine);
-        coctx_swap(&t_currentCoroutine->m_ctx, &t_mainCoroutine->m_ctx);
+        coctx_swap(&cor->m_ctx, &t_mainCoroutine->m_ctx);
     }
 
     void Coroutine::yieldToStopped() {
@@ -67,9 +103,10 @@ namespace Oimo {
         if (t_currentCoroutine->m_state != CoroutineState::RUNNING) {
             LOG_FATAL << "Coroutine should never yield when not running";
         }
-        t_currentCoroutine->m_state = CoroutineState::STOPPED;
+        auto cor = t_currentCoroutine;
+        cor->m_state = CoroutineState::STOPPED;
         setCurrentCoroutine(t_mainCoroutine);
-        coctx_swap(&t_currentCoroutine->m_ctx, &t_mainCoroutine->m_ctx);
+        coctx_swap(&cor->m_ctx, &t_mainCoroutine->m_ctx);
     }
 
     Coroutine::sPtr Coroutine::currentCoroutine() {
@@ -88,10 +125,10 @@ namespace Oimo {
         return t_currentCoroutine->m_id;
     }
 
-    void Coroutine::run(Coroutine::sPtr self) {
+    void Coroutine::run(Coroutine* self) {
         assert(self);
         assert(self->m_state == CoroutineState::RUNNING);
-        assert(self == t_currentCoroutine);
+        assert(self == t_currentCoroutine.get());
         self->m_func();
         yieldToStopped();
         LOG_FATAL << "Coroutine should never reach here";

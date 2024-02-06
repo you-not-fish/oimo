@@ -19,7 +19,7 @@ namespace Oimo {
         void threadFunc();
         std::vector<LogBuffer::sPtr> m_buffers;
         bool m_running;
-        Thread m_thread;
+        Thread::sPtr m_thread;
         LogFile::uPtr m_file;\
         bool m_appendToFile;
         bool m_appendToStdout;

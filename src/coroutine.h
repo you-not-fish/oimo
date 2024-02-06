@@ -17,6 +17,7 @@ namespace Oimo {
     public:
         using sPtr = std::shared_ptr<Coroutine>;
         using CoroutineFunc = std::function<void()>;
+        Coroutine(CoroutineFunc func, uint32_t stackSize = 0);
         ~Coroutine();
         enum class CoroutineState {
             INIT,
@@ -24,6 +25,7 @@ namespace Oimo {
             SUSPENDED,
             STOPPED
         };
+        void resume();
         void reset(CoroutineFunc func, uint32_t stackSize = 0);
         static bool isMainCoroutine();
         static void resume(Coroutine::sPtr coroutine);
@@ -35,7 +37,7 @@ namespace Oimo {
         static uint64_t currentCoroutineID();
     private:
         Coroutine();
-        static void run(Coroutine::sPtr self);
+        static void run(Coroutine *self);
         static thread_local uint64_t t_coroutineID;
         static thread_local Coroutine::sPtr t_currentCoroutine;
         static thread_local Coroutine::sPtr t_mainCoroutine;
@@ -43,6 +45,8 @@ namespace Oimo {
         CoroutineFunc m_func;
         struct coctx m_ctx;
         uint32_t m_stackSize;
+        char* m_stack {nullptr};
+        char* m_stackTop {nullptr};
         CoroutineState m_state{CoroutineState::INIT};
     };
 } // namespace Oimo

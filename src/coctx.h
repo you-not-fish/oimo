@@ -1,5 +1,5 @@
 namespace Oimo {
-    enum class Register : int {
+    enum class Register {
         kRBP = 6,   // rbp, bottom of stack
         kRDI = 7,   // rdi, first para when call function
         kRSI = 8,   // rsi, second para when call function
@@ -9,7 +9,7 @@ namespace Oimo {
 
 
     struct coctx {
-        void* regs[14];
+        char* regs[14];
     };
 
     extern "C" {

@@ -13,7 +13,7 @@ namespace Oimo {
         Singleton<Config>::instance();
         Thread::setCurrentThreadID(syscall(SYS_gettid));
         Thread::setCurrentThreadName("main");
-        Coroutine::t_mainCoroutine = std::make_shared<Coroutine>();
+        Coroutine::t_mainCoroutine.reset(new Coroutine());
         Coroutine::setCurrentCoroutine(Coroutine::t_mainCoroutine);
         Singleton<LogThread>::instance().start();
     }

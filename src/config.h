@@ -23,6 +23,15 @@ namespace Oimo {
         void set(const std::string& key, double value);
         void set(const std::string& key, bool value);
 
+        template <typename T>
+        T get(const std::string& key, const T& defaultValue) const {
+            std::lock_guard<std::mutex> lock(m_mutex);
+            auto it = m_map.find(key);
+            if (it != m_map.end()) {
+                return YAML::Load(it->second).as<T>();
+            }
+            return defaultValue;
+        }
         std::string get(const std::string& key, const std::string& defaultValue = "") const;
         int getInt(const std::string& key, int defaultValue = 0) const;
         float getFloat(const std::string& key, float defaultValue = 0.0f) const;

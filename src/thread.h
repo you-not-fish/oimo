@@ -40,7 +40,7 @@ namespace Oimo {
         };
         ThreadState state() const { return m_state; }
     private:
-        static void run(Coroutine::sPtr self);
+        static void run(Thread::sPtr self);
         static thread_local pid_t t_currentThreadID;
         static thread_local std::string t_currentThreadName;
         std::string m_name;

@@ -15,7 +15,7 @@ void test() {
     LOG_WARN << 2.5;
     LOG_ERROR << 'a';
     LOG_DEBUG << "Hello, world!";
-    LOG_FATAL << "Goodbye, world!";
+    // LOG_FATAL << "Goodbye, world!";
 
 }
 
@@ -27,7 +27,7 @@ int main() {
     initOimo();
     Logger::setLogLevel(LogLevel::DEBUG);
     test();
-    std::vector<Thread::uPtr> threads;
+    std::vector<Thread::sPtr> threads;
     for (int i = 0; i < 2; ++i) {
         threads.push_back(std::make_unique<Thread>(
             std::bind(threadFunc, i), "thread" + std::to_string(i)));

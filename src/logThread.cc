@@ -11,7 +11,9 @@
 namespace Oimo {
     LogThread::LogThread()
         : m_running(false),
-        m_thread(std::bind(&LogThread::threadFunc, this), "LogThread"),
+        m_thread(
+            std::make_shared<Thread>(
+            std::bind(&LogThread::threadFunc, this), "LogThread")),
         m_appendToFile(Singleton<Config>::instance().getBool("log.append_to_file")),
         m_appendToStdout(Singleton<Config>::instance().getBool("log.append_to_stdout", true))
     {
@@ -35,13 +37,13 @@ namespace Oimo {
     {
         assert(!m_running);
         m_running = true;
-        m_thread.start();
+        m_thread->start();
     }
 
     void LogThread::stop()
     {
         m_running = false;
-        m_thread.join();
+        m_thread->join();
     }
 
     void LogThread::threadFunc()
@@ -51,8 +53,7 @@ namespace Oimo {
             m_buffers.clear();
             {
                 std::unique_lock<std::mutex> lock(g_logMutex);
-                g_logCond.wait_for(lock, std::chrono::seconds(3),
-                    [this] { return !g_logBuffers.empty() && this->m_running; });
+                g_logCond.wait_for(lock, std::chrono::seconds(3));
                 m_buffers.swap(g_logBuffers);
             }
             if (m_appendToFile) {

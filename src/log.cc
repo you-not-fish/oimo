@@ -1,11 +1,6 @@
 #include <memory>
-#include <iostream>
 #include <string>
-#include <vector>
-#include <mutex>
-#include <condition_variable>
 #include <cassert>
-#include <cstdio>
 #include <errno.h>
 #include "log.h"
 #include "thread.h"
@@ -17,7 +12,8 @@ namespace Oimo {
     std::vector<LogBuffer::sPtr> g_logBuffers;
     
     Logger::Logger(LogLevel level, const char* file, int line, const char* func)
-        : m_stream() {
+        : m_level(level),
+          m_stream() {
         logTime();
         m_stream << " [" << logLevelToString(level) << "] ";
         m_stream << Thread::currentThreadName() << " ";
@@ -33,10 +29,13 @@ namespace Oimo {
         {
             std::lock_guard<std::mutex> lock(g_logMutex);
             g_logBuffers.push_back(m_stream.buffer());
-            if (g_logBuffers.size() > 10) {
+            if (g_logBuffers.size() > 20) {
                 g_logCond.notify_one();
             }
             // std::cout << m_stream.buffer()->toString();
+        }
+        if (m_level == LogLevel::FATAL) {
+            abort();
         }
     }
 
@@ -66,6 +65,7 @@ namespace Oimo {
         m_fp = fopen(newFileName.c_str(), "ae");
         if (!m_fp) {
             fprintf(stderr, "LogFile::LogFile() failed %s\n", strerror(errno));
+            abort();
         }
     }
 

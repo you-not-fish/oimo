@@ -11,7 +11,7 @@
 
 namespace Oimo {
     class Coroutine : noncopyable,
-    std::enable_shared_from_this<Coroutine> {
+        public std::enable_shared_from_this<Coroutine> {
         friend class Thread;
         friend void initOimo();
     public:

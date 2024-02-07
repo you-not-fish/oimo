@@ -19,7 +19,7 @@ namespace Oimo {
         assert(m_func);
         m_thread = std::thread(run, shared_from_this());
         std::unique_lock<std::mutex> lock(m_mutex);
-        m_cond.wait(lock);
+        m_cond.wait_for(lock, std::chrono::milliseconds(500));
     }
 
     void Thread::join() {

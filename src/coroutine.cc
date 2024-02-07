@@ -54,6 +54,9 @@ namespace Oimo {
     }
 
     void Coroutine::reset(CoroutineFunc func, uint32_t stackSize) {
+        if (m_state == CoroutineState::RUNNING) {
+            LOG_FATAL << "Coroutine should never be reset when running";
+        }
         m_func = func;
         if (stackSize) {
             m_stackSize = stackSize;

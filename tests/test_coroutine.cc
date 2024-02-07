@@ -15,9 +15,10 @@ void corFunc() {
 void testCoroutine() {
     LOG_INFO << "thread: " << Thread::currentThreadID();
     Coroutine::sPtr cor = std::make_shared<Coroutine>(corFunc);
-    Coroutine::resume(cor);
+    std::cout << "use count: " << cor.use_count() <<std::endl;
+    cor->resume();
     LOG_INFO << "after coroutine start, thread: " << Thread::currentThreadID();
-    Coroutine::resume(cor);
+    cor->resume();
     LOG_INFO << "after coroutine resume, thread: " << Thread::currentThreadID();
 }
 

@@ -19,7 +19,7 @@ namespace Oimo {
     {
         if (m_appendToFile)
         {
-            std::string filePath = Singleton<Config>::instance().get("log.file_path", "/tmp/Oimo");
+            std::string filePath = Singleton<Config>::instance().get("log.file_path", "/tmp");
             std::string fileName = Singleton<Config>::instance().get("log.file_prefix", "Oimo");
             m_file.reset(new LogFile(filePath + "/" + fileName));
         }

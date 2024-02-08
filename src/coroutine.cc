@@ -57,11 +57,20 @@ namespace Oimo {
         if (m_state == CoroutineState::RUNNING) {
             LOG_FATAL << "Coroutine should never be reset when running";
         }
+        m_sid = 0;
         m_func = func;
         if (stackSize) {
             m_stackSize = stackSize;
         }
         m_state = CoroutineState::INIT;
+    }
+
+    Coroutine::SessionID Coroutine::generateSid(uint32_t n) {
+        Coroutine::SessionID s = 0;
+        uint16_t now = (uint16_t)time(nullptr);
+        uint16_t tid = (uint16_t)Thread::currentThreadID();
+        s = (now << 8) | (tid & 0x00F0) | (n & 0x000F);
+        return s;
     }
 
     void Coroutine::resume(Coroutine::sPtr coroutine) {

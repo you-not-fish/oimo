@@ -16,6 +16,7 @@ namespace Oimo {
         friend void initOimo();
     public:
         using sPtr = std::shared_ptr<Coroutine>;
+        using SessionID = uint16_t;
         using CoroutineFunc = std::function<void()>;
         Coroutine(CoroutineFunc func, uint32_t stackSize = 0);
         ~Coroutine();
@@ -25,8 +26,12 @@ namespace Oimo {
             SUSPENDED,
             STOPPED
         };
+        CoroutineState state() const { return m_state; }
         void resume();
         void reset(CoroutineFunc func, uint32_t stackSize = 0);
+        SessionID sid() const { return m_sid; }
+        void setSid(SessionID sid) { m_sid = sid; }
+        static SessionID generateSid(uint32_t);
         static bool isMainCoroutine();
         static void resume(Coroutine::sPtr coroutine);
         static void yieldToSuspend();
@@ -42,6 +47,7 @@ namespace Oimo {
         static thread_local Coroutine::sPtr t_currentCoroutine;
         static thread_local Coroutine::sPtr t_mainCoroutine;
         uint64_t m_id;
+        SessionID m_sid {0};
         CoroutineFunc m_func;
         struct coctx m_ctx;
         uint32_t m_stackSize;

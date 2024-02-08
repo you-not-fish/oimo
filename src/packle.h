@@ -6,12 +6,15 @@ namespace Oimo {
     class Packle {
     public:
         using sPtr = std::shared_ptr<Packle>;
-        Packle(uint16_t type = 0, uint32_t source = 0,
+        using MsgID = uint16_t;
+        Packle(MsgID type = 0, uint32_t source = 0,
             char* buf = nullptr, size_t size = 0)
             : m_type(type)
             , m_source(source)
+            , m_sessionID(0)
             , m_buf(buf)
-            , m_size(size) {
+            , m_size(size)
+            , m_isRet(false) {
         }
         virtual ~Packle() {
             if (m_buf) {
@@ -42,8 +45,10 @@ namespace Oimo {
         void reset(uint16_t type, uint32_t source, char* buf, size_t size) {
             m_type = type;
             m_source = source;
+            m_sessionID = 0;
             m_buf = buf;
             m_size = size;
+            m_isRet = false;
         }
 
         uint16_t type() const {
@@ -78,10 +83,28 @@ namespace Oimo {
             m_size = size;
         }
 
+        Coroutine::SessionID sessionID() const {
+            return m_sessionID;
+        }
+
+        void setSessionID(Coroutine::SessionID sessionID) {
+            m_sessionID = sessionID;
+        }
+
+        bool isRet() const {
+            return m_isRet;
+        }
+
+        void setIsRet(bool isRet) {
+            m_isRet = isRet;
+        }
+
     private:
         uint16_t m_type;
         uint32_t m_source;
+        Coroutine::SessionID m_sessionID;
         char* m_buf;
         size_t m_size;
+        bool m_isRet;
     };
 } // namespace Oim

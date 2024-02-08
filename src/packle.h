@@ -42,12 +42,11 @@ namespace Oimo {
             return v;
         }
 
-        void reset(uint16_t type, uint32_t source, char* buf, size_t size) {
+        void reset(uint16_t type = 0, uint32_t source = 0) {
             m_type = type;
             m_source = source;
             m_sessionID = 0;
-            m_buf = buf;
-            m_size = size;
+            m_size = 0;
             m_isRet = false;
         }
 
@@ -76,6 +75,9 @@ namespace Oimo {
         }
 
         void setBuf(char* buf) {
+            if (m_buf) {
+                delete[] m_buf;
+            }
             m_buf = buf;
         }
 

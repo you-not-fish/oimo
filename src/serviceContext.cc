@@ -9,12 +9,14 @@ namespace Oimo {
     ServiceContext::sPtr ServiceContext::createContext(const std::string& name) {
         ServiceContext::sPtr context = ServiceContextMgr::getContext(name);
         if (context) {
-            LOG_WARN << "Context for name: " << name << " already exists";
+            LOG_ERROR << "Context for name: " << name << " already exists";
             return context;
         }
         context = std::make_shared<ServiceContext>();
         context->setName(name);
         context->setServiceID(ServiceContextMgr::generateServiceID());
+        context->setMessageQueue(std::make_shared<PackleQueue>(context));
+        context->m_returnPackle = std::make_shared<Packle>();
         ServiceContextMgr::registerContext(context);
         return context;
     }
@@ -28,6 +30,19 @@ namespace Oimo {
         Coroutine::sPtr coroutine = getCoroutine(func);
         m_forkingQueue.push(coroutine);
     }
+
+    void ServiceContext::doFork() {
+        size_t count = m_forkingQueue.size();
+        for (size_t i = 0; i < count; ++i) {
+            Coroutine::sPtr coroutine = m_forkingQueue.front();
+            m_forkingQueue.pop();
+            coroutine->resume();
+            if (coroutine->state() == Coroutine::CoroutineState::STOPPED) {
+                returnCoroutine(coroutine);
+            }
+        }
+    }
+
     void ServiceContext::suspend(Coroutine::sPtr coroutine) {
         assert(coroutine);
         assert(coroutine->state() == Coroutine::CoroutineState::RUNNING);
@@ -51,9 +66,26 @@ namespace Oimo {
                     m_responsePackle = packle;
                     coroutine->resume();
                     m_responsePackle.reset();
+                    if (coroutine->state() == Coroutine::CoroutineState::STOPPED) {
+                        returnCoroutine(coroutine);
+                    }
                 }
             }
+        } else {
+            auto it = m_handlers.find(packle->type());
+            if (it != m_handlers.end()) {
+                Coroutine::sPtr coroutine = getCoroutine([this, it, packle]() {
+                    it->second(packle);
+                });
+                coroutine->resume();
+                if (coroutine->state() == Coroutine::CoroutineState::STOPPED) {
+                    returnCoroutine(coroutine);
+                }
+            } else {
+                LOG_ERROR << "No handler for message type: " << packle->type();
+            }
         }
+        ret(packle->source());
     }
     
     Coroutine::sPtr ServiceContext::getCoroutine(const Coroutine::CoroutineFunc& func) {
@@ -133,12 +165,12 @@ namespace Oimo {
     }
 
     void ServiceContext::ret(ServiceID dest) {
-        if (!m_returnPackle) return;
+        if (m_returnPackle->sessionID() == 0) return;
         ServiceContext::sPtr context = ServiceContextMgr::getContext(dest);
         if (context) {
             m_returnPackle->setIsRet(true);
             context->messageQueue()->push(m_responsePackle);
-            m_responsePackle.reset();
+            m_responsePackle->reset();
         } else {
             LOG_ERROR << "No context for serviceID: " << dest;
         }
@@ -148,6 +180,7 @@ namespace Oimo {
         auto it = m_suspendingPool.find(sessionID);
         if (it != m_suspendingPool.end()) {
             Coroutine::sPtr coroutine = it->second;
+            assert(coroutine->state() == Coroutine::CoroutineState::SUSPENDED);
             m_suspendingPool.erase(it);
             return coroutine;
         }

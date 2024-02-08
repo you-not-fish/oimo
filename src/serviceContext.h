@@ -11,6 +11,9 @@
 
 namespace Oimo {
     
+    enum class SystemMsgID : Packle::MsgID {
+        INIT = 0XFFFF
+    };
     
     class ServiceContext {
     public:
@@ -19,10 +22,9 @@ namespace Oimo {
         using HandlerFunc = std::function<void(Packle::sPtr)>;
         using CoroutinePool = std::map<Coroutine::SessionID, Coroutine::sPtr>;
         using CoroutineQueue = std::queue<Coroutine::sPtr>;
-        virtual ~ServiceContext();
         static ServiceContext::sPtr createContext(const std::string& name);
-        virtual void init() = 0;
         void fork(Coroutine::CoroutineFunc func);
+        void doFork();
         void suspend(Coroutine::sPtr coroutine);
         void registerHandler(Packle::MsgID messageID, HandlerFunc handler);
         virtual void dispatch(Packle::sPtr packle);

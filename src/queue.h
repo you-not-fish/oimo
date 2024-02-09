@@ -2,16 +2,16 @@
 
 #include <memory>
 #include <queue>
-#include "serviceContext.h"
 #include "packle.h"
 #include "spinLock.h"
 
 namespace Oimo {
+    class ServiceContext;
     class PackleQueue
         : public std::enable_shared_from_this<PackleQueue>{
     public:
         using sPtr = std::shared_ptr<PackleQueue>;
-        PackleQueue(ServiceContext::sPtr context = nullptr)
+        PackleQueue(std::shared_ptr<ServiceContext> context = nullptr)
             : m_context(context)
             , m_isInGlobal(false) {
         }
@@ -22,7 +22,7 @@ namespace Oimo {
             SpinLockGuard guard(m_lock);
             return m_queue.empty();
         }
-        ServiceContext::sPtr context() const {
+        std::shared_ptr<ServiceContext> context() const {
             return m_context;
         }
         bool isInGlobal() const {
@@ -31,16 +31,16 @@ namespace Oimo {
         void setInGlobal(bool isInGlobal) {
             m_isInGlobal = isInGlobal;
         }
-        void setContext(ServiceContext::sPtr context) {
+        void setContext(std::shared_ptr<ServiceContext> context) {
             m_context = context;
         }
-        void swap(PackleQueue& other) {
+        void swap(std::deque<Packle::sPtr>& other) {
             SpinLockGuard guard(m_lock);
-            other.m_queue.swap(m_queue);
+            other.swap(m_queue);
             setInGlobal(false);
         }
     private:
-        ServiceContext::sPtr m_context;
+        std::shared_ptr<ServiceContext> m_context;
         bool m_isInGlobal;
         std::deque<Packle::sPtr> m_queue;
         SpinLock m_lock;
@@ -67,6 +67,10 @@ namespace Oimo {
         bool empty() {
             SpinLockGuard guard(m_lock);
             return m_queue.empty();
+        }
+        size_t size() {
+            // SpinLockGuard guard(m_lock);
+            return m_queue.size();
         }
     private:
         std::deque<PackleQueue::sPtr> m_queue;

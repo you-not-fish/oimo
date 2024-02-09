@@ -14,7 +14,6 @@ void threadFunc() {
         if (!Singleton<GlobalQueue>::instance().empty()) {
             PackleQueue::sPtr packleQueue = Singleton<GlobalQueue>::instance().pop();
             if (packleQueue) {
-                LOG_INFO << "serviceID: " << packleQueue->serviceID();
                 while (!packleQueue->empty()) {
                     Packle::sPtr packle = packleQueue->pop();
                     if (packle) {
@@ -44,7 +43,7 @@ int main() {
 
     Packle::sPtr packle = std::make_shared<Packle>();
     packle->serialize(testMessage);
-    PackleQueue::sPtr packleQueue = std::make_shared<PackleQueue>(1);
+    PackleQueue::sPtr packleQueue = std::make_shared<PackleQueue>();
     packleQueue->push(packle);
     t->join();
     return 0;

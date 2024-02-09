@@ -19,7 +19,17 @@ namespace Oimo {
                 "coroutine.stack_size", 1024 * 1024);
         m_stack = new char[m_stackSize];
         m_stackTop = m_stack + m_stackSize;
+        initContext();
+    }
 
+    Coroutine::Coroutine() {
+        assert(t_coroutineID == 0);
+        m_id = t_coroutineID++;
+        m_stackSize = 0;
+        m_state = CoroutineState::RUNNING;
+    }
+
+    void Coroutine::initContext() {
         memset(&m_ctx, 0, sizeof(m_ctx));
 
         m_ctx.regs[static_cast<int>(Register::kRSP)]
@@ -30,13 +40,6 @@ namespace Oimo {
             = reinterpret_cast<char*>(run);
         m_ctx.regs[static_cast<int>(Register::kRDI)]
             = reinterpret_cast<char*>(this);
-    }
-
-    Coroutine::Coroutine() {
-        assert(t_coroutineID == 0);
-        m_id = t_coroutineID++;
-        m_stackSize = 0;
-        m_state = CoroutineState::RUNNING;
     }
 
     Coroutine::~Coroutine() {
@@ -60,9 +63,17 @@ namespace Oimo {
         m_sid = 0;
         m_func = func;
         if (stackSize) {
-            m_stackSize = stackSize;
+            if (m_stackSize != stackSize) {
+                if (m_stack) {
+                    delete[] m_stack;
+                }
+                m_stack = new char[stackSize];
+                m_stackTop = m_stack + stackSize;
+                m_stackSize = stackSize;
+            }
         }
         m_state = CoroutineState::INIT;
+        initContext();
     }
 
     Coroutine::SessionID Coroutine::generateSid(uint32_t n) {

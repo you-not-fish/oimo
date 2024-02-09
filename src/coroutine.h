@@ -6,7 +6,6 @@
 #include <functional>
 #include "coctx.h"
 #include "thread.h"
-#include "init.h"
 #include "noncopyable.h"
 
 namespace Oimo {
@@ -42,6 +41,7 @@ namespace Oimo {
         static uint64_t currentCoroutineID();
     private:
         Coroutine();
+        void initContext();
         static void run(Coroutine *self);
         static thread_local uint64_t t_coroutineID;
         static thread_local Coroutine::sPtr t_currentCoroutine;

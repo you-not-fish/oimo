@@ -1,0 +1,4 @@
+log:
+  append_to_file: true
+  append_to_stdout: true
+  file_prefix: test

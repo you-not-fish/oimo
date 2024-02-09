@@ -1,77 +1,68 @@
+#include <iostream>
+#include <cassert>
 #include "../src/init.h"
 #include "../src/log.h"
 #include "../src/queue.h"
 #include "../src/thread.h"
 #include "../src/singleton.h"
-#include "../src/serviceContext.h"
+#include "../src/serviceMgr.h"
 #include "protobuf/response.pb.h"
 
 using namespace Oimo;
 
 enum class MsgID : Packle::MsgID {
-    Query,
+    Query = 1,
     Response
 };
 
-class QueryService {
+class QueryService : public Service {
 public:
-    QueryService(ServiceContext::sPtr context) : m_context(context) {
-        m_context->registerHandler((Packle::MsgID)SystemMsgID::INIT,
-            std::bind(&QueryService::init, this, std::placeholders::_1));
-    }
-    void init(Packle::sPtr packle) {
-        LOG_INFO << "QueryService::init";
+    void init(Packle::sPtr packle) override {
+        assert(m_context == ServiceContext::currentContext());
         Packle::sPtr query = std::make_shared<Packle>((Packle::MsgID)MsgID::Query);
         ServiceContext::call("DBService", query);
         Packle::sPtr response = m_context->responsePackle();
         test::Response resp = response->deserialize<test::Response>();
         LOG_INFO << "name: " << resp.name() << " age: " << resp.age() << " email: " << resp.email(0);
-
     }
-private:
-    ServiceContext::sPtr m_context;
 };
 
-class DBService {
+class DBService : public Service{
 public:
-    DBService(ServiceContext::sPtr context) : m_context(context) {
-        m_context->registerHandler((Packle::MsgID)SystemMsgID::INIT,
-            std::bind(&DBService::init, this, std::placeholders::_1));
-    }
-
-    void init(Packle::sPtr packle) {
-        LOG_INFO << "DBService::init";
+    void init(Packle::sPtr packle) override {
+        assert(m_context == ServiceContext::currentContext());
         m_context->registerHandler((Packle::MsgID)MsgID::Query,
             std::bind(&DBService::query, this, std::placeholders::_1));
     }
 
     void query(Packle::sPtr packle) {
-        LOG_INFO << "DBService::query";
-        Packle::sPtr response = m_context->returnPackle();
+        Packle::sPtr response = std::make_shared<Packle>((Packle::MsgID)MsgID::Response);
         test::Response resp;
         resp.set_name("nagisa");
         resp.set_age(18);
         resp.add_email("xxx@xxx.com");
         response->serialize(resp);
         response->setSessionID(packle->sessionID());
+        m_context->setReturnPackle(response);
     }
-private:
-    ServiceContext::sPtr m_context;
 };
 
 void worker() {
-    auto G = Singleton<Global>::instance();
+    auto& G = Singleton<GlobalQueue>::instance();
     while(true) {
-        if (!G->empty()) {
-            PackleQueue::sPtr que;
-            PackleQueue::sPtr queue = G->pop();
-            queue->swap(*que);
-            auto context = que->context();
+        // LOG_INFO << "Global Queue Size: " << G.size();
+        if (!G.empty()) {
+            PackleQueue::sPtr queue = G.pop();
+            std::deque<Packle::sPtr> que;
+            auto context = queue->context();
+            queue->swap(que);
+            LOG_INFO << "process message from : " << context->name();
             assert(context);
             ServiceContext::setCurrentContext(context);
             context->doFork();
-            while (!que->empty()) {
-                Packle::sPtr packle = que->pop();
+            while (!que.empty()) {
+                Packle::sPtr packle = que.front();
+                que.pop_front();
                 assert(packle);
                 context->dispatch(packle);
             }
@@ -82,8 +73,8 @@ void worker() {
 
 int main() {
     initOimo();
-    DBService dbService(ServiceContext::createContext("DBService"));
-    QueryService queryService(ServiceContext::createContext("QueryService"));
+    newService<DBService>("DBService");
+    newService<QueryService>("QueryService");
     Thread::sPtr t1 = std::make_shared<Thread>(worker, "worker1");
     Thread::sPtr t2 = std::make_shared<Thread>(worker, "worker2");
     t1->start();

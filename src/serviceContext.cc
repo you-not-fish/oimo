@@ -16,7 +16,6 @@ namespace Oimo {
         context->setName(name);
         context->setServiceID(ServiceContextMgr::generateServiceID());
         context->setMessageQueue(std::make_shared<PackleQueue>(context));
-        context->m_returnPackle = std::make_shared<Packle>();
         ServiceContextMgr::registerContext(context);
         return context;
     }
@@ -74,9 +73,9 @@ namespace Oimo {
         } else {
             auto it = m_handlers.find(packle->type());
             if (it != m_handlers.end()) {
-                Coroutine::sPtr coroutine = getCoroutine([this, it, packle]() {
-                    it->second(packle);
-                });
+                Coroutine::sPtr coroutine = getCoroutine(
+                    std::bind(it->second, packle)
+                );
                 coroutine->resume();
                 if (coroutine->state() == Coroutine::CoroutineState::STOPPED) {
                     returnCoroutine(coroutine);
@@ -134,7 +133,7 @@ namespace Oimo {
         dest->messageQueue()->push(packle);
         coroutine->setSid(sessionID);
         self->suspend(coroutine);
-        Coroutine::yieldToStopped();
+        Coroutine::yieldToSuspend();
     }
 
     void ServiceContext::send(ServiceID dest, Packle::sPtr packle) {
@@ -157,23 +156,22 @@ namespace Oimo {
     void ServiceContext::send(ServiceContext::sPtr dest, Packle::sPtr packle) {
         assert(dest);
         assert(packle);
-        assert(currentContext());
-        assert(!Coroutine::isMainCoroutine());
-        packle->setSource(currentContext()->serviceID());
+        auto serviceID = currentContext() ? currentContext()->serviceID() : 0;
+        packle->setSource(serviceID);
         packle->setSessionID(0);
         dest->messageQueue()->push(packle);
     }
 
     void ServiceContext::ret(ServiceID dest) {
-        if (m_returnPackle->sessionID() == 0) return;
+        if (!m_returnPackle) return;
         ServiceContext::sPtr context = ServiceContextMgr::getContext(dest);
         if (context) {
             m_returnPackle->setIsRet(true);
-            context->messageQueue()->push(m_responsePackle);
-            m_responsePackle->reset();
+            context->messageQueue()->push(m_returnPackle);
         } else {
             LOG_ERROR << "No context for serviceID: " << dest;
         }
+        m_returnPackle.reset();
     }
 
     Coroutine::sPtr ServiceContext::getSuspendCoroutine(Coroutine::SessionID sessionID) {

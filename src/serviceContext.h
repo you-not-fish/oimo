@@ -22,20 +22,24 @@ namespace Oimo {
         using HandlerFunc = std::function<void(Packle::sPtr)>;
         using CoroutinePool = std::map<Coroutine::SessionID, Coroutine::sPtr>;
         using CoroutineQueue = std::queue<Coroutine::sPtr>;
+        ServiceContext() = default;
+        ~ServiceContext();
         static ServiceContext::sPtr createContext(const std::string& name);
         void fork(Coroutine::CoroutineFunc func);
         void doFork();
         void suspend(Coroutine::sPtr coroutine);
         void registerHandler(Packle::MsgID messageID, HandlerFunc handler);
-        virtual void dispatch(Packle::sPtr packle);
+        void dispatch(Packle::sPtr packle);
         static Coroutine::sPtr getCoroutine(const Coroutine::CoroutineFunc& func);
         static void returnCoroutine(Coroutine::sPtr coroutine);
         ServiceID serviceID() const { return m_serviceID; }
         void setServiceID(ServiceID serviceID) { m_serviceID = serviceID; }
         std::string name() const { return m_name; }
         void setName(std::string name) { m_name = name; }
-        Packle::sPtr responsePackle() const { return m_responsePackle; }
+        void setReturnPackle(Packle::sPtr packle) { m_returnPackle = packle;}
         Packle::sPtr returnPackle() const { return m_returnPackle; }
+        void setResponsePackle(Packle::sPtr packle) { m_responsePackle = packle; }
+        Packle::sPtr responsePackle() const { return m_responsePackle; }
         static void call(ServiceID dest, Packle::sPtr packle);
         static void call(std::string dest, Packle::sPtr packle);
         static void call(ServiceContext::sPtr dest, Packle::sPtr packle);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include "coroutine.h"
 
 namespace Oimo {
     class Packle {

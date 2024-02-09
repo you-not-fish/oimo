@@ -1,6 +1,7 @@
 #pragma once
 
 #include "serviceContext.h"
+#include "spinLock.h"
 
 namespace Oimo {
     class ServiceContextMgr : noncopyable {
@@ -14,5 +15,6 @@ namespace Oimo {
     private:
         static std::map<std::string, ServiceContext::sPtr> namedContexts;
         static std::map<ServiceID, ServiceContext::sPtr> idContexts;
+        static SpinLock lock;
     };
 } // namespace Oimo

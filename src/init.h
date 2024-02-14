@@ -1,3 +1,0 @@
-namespace Oimo {
-    void initOimo();
-}

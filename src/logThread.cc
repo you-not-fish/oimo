@@ -30,6 +30,7 @@ namespace Oimo {
         if (m_running)
         {
             stop();
+            join();
         }
     }
 
@@ -40,10 +41,14 @@ namespace Oimo {
         m_thread->start();
     }
 
+    void LogThread::join()
+    {
+        m_thread->join();
+    }
+
     void LogThread::stop()
     {
         m_running = false;
-        m_thread->join();
     }
 
     void LogThread::threadFunc()

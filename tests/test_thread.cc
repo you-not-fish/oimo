@@ -1,13 +1,15 @@
 #include <iostream>
 #include <vector>
-#include "../src/log.h"
-#include "../src/thread.h"
-#include "../src/init.h"
+#include "../src/application.h"
+#include "../src/singleton.h"
+#include "../src/logThread.h"
 
 using namespace Oimo;
 
 int main() {
-    initOimo();
+    Application app;
+    app.init();
+    Singleton<LogThread>::instance().start();
     std::vector<Thread::sPtr> threads;
     for (int i = 0; i < 2; ++i) {
         threads.push_back(std::make_shared<Thread>(

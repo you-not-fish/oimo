@@ -1,7 +1,7 @@
 #include <iostream>
-#include "../src/init.h"
-#include "../src/log.h"
-#include "../src/thread.h"
+#include "../src/application.h"
+#include "../src/singleton.h"
+#include "../src/logThread.h"
 #include "../src/coroutine.h"
 
 using namespace Oimo;
@@ -30,7 +30,9 @@ void threadFunc() {
 }
 
 int main() {
-    initOimo();
+    Application app;
+    app.init();
+    Singleton<LogThread>::instance().start();
     threadFunc();
     std::vector<Thread::sPtr> threads;
     for (int i = 0; i < 3; ++i) {

@@ -1,9 +1,9 @@
 #include <iostream>
-#include "../src/init.h"
+#include "../src/application.h"
 #include "../src/singleton.h"
 #include "../src/queue.h"
 #include "../src/thread.h"
-#include "../src/log.h"
+#include "../src/logThread.h"
 #include "../src/packle.h"
 #include "protobuf/test.pb.h"
 
@@ -33,7 +33,9 @@ void threadFunc() {
 }
 
 int main() {
-    initOimo();
+    Application app;
+    app.init();
+    Singleton<LogThread>::instance().start();
     Thread::sPtr t = std::make_shared<Thread>(threadFunc, "test");
     t->start();
     test::TestMessage testMessage;

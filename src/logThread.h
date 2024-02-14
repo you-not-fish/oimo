@@ -14,6 +14,7 @@ namespace Oimo {
         LogThread();
         ~LogThread();
         void start();
+        void join();
         void stop();
     private:
         void threadFunc();

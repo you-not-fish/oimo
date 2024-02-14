@@ -1,7 +1,6 @@
 #include <iostream>
 #include <memory>
-#include "../src/init.h"
-#include "../src/log.h"
+#include "../src/application.h"
 #include "../src/logThread.h"
 #include "../src/config.h"
 #include "../src/singleton.h"
@@ -24,7 +23,9 @@ void threadFunc(int i) {
 }
 
 int main() {
-    initOimo();
+    Application app;
+    app.init();
+    Singleton<LogThread>::instance().start();
     Logger::setLogLevel(LogLevel::DEBUG);
     test();
     std::vector<Thread::sPtr> threads;

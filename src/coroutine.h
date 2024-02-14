@@ -12,7 +12,7 @@ namespace Oimo {
     class Coroutine : noncopyable,
         public std::enable_shared_from_this<Coroutine> {
         friend class Thread;
-        friend void initOimo();
+        friend class Application;
     public:
         using sPtr = std::shared_ptr<Coroutine>;
         using SessionID = uint16_t;

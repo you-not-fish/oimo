@@ -1,15 +1,18 @@
 #include <cassert>
 #include <sys/syscall.h>
-#include <unistd.h>
+#include "application.h"
 #include "config.h"
-#include "thread.h"
-#include "coroutine.h"
-#include "logThread.h"
 #include "queue.h"
 #include "singleton.h"
+#include "coroutine.h"
+#include "logThread.h"
+#include "workThread.h"
 
 namespace Oimo {
-    void initOimo() {
+    Application::~Application() {
+        stop();
+    }
+    void Application::init() {
         assert(Thread::currentThreadID() == 0);
         Singleton<Config>::instance();
         Singleton<GlobalQueue>::instance();
@@ -17,6 +20,18 @@ namespace Oimo {
         Thread::setCurrentThreadName("main");
         Coroutine::t_mainCoroutine.reset(new Coroutine());
         Coroutine::setCurrentCoroutine(Coroutine::t_mainCoroutine);
+    }
+
+    int Application::run() {
         Singleton<LogThread>::instance().start();
+        Singleton<WorkThread>::instance().start();
+        Singleton<WorkThread>::instance().join();
+        Singleton<LogThread>::instance().join();
+        return 0;
+    }
+
+    void Application::stop() {
+        Singleton<LogThread>::instance().stop();
+        Singleton<WorkThread>::instance().stop();
     }
 }

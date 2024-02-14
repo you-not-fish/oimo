@@ -15,6 +15,15 @@ namespace Oimo {
         void registerFunc(Packle::MsgID messageID, ServiceContext::HandlerFunc handler) {
             m_context->registerHandler(messageID, handler);
         }
+
+        template<typename T>
+        void call(T dest, Packle::sPtr packle) {
+            m_context->call(dest, packle);
+        }
+        template<typename T>
+        void send(T dest, Packle::sPtr packle) {
+            m_context->send(dest, packle);
+        }
         ServiceContext::ServiceID id() const {
             return m_context ? m_context->serviceID() : 0;
         }
@@ -24,7 +33,13 @@ namespace Oimo {
         ServiceContext::sPtr context() const {
             return m_context;
         }
-    protected:
+        Packle::sPtr responsePackle() {
+            return m_context->responsePackle();
+        }
+        void setReturnPackle(Packle::sPtr packle) {
+            m_context->setReturnPackle(packle);
+        }
+    private:
         ServiceContext::sPtr m_context;
     };
 }

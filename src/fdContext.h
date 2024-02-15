@@ -1,14 +1,13 @@
 #pragma once
 #include "socketState.h"
+#include "packle.h"
 namespace Oimo {
 namespace Net {
-    class EventLoop;
     class FdContext {
     public:
-        FdContext(EventLoop* loop = nullptr, int fd = -1);
+        FdContext(int fd = -1);
         virtual ~FdContext();
         virtual void handleEvent() = 0;
-        void setLoop(EventLoop* loop) { m_loop = loop; }
         int fd() const { return m_fd; }
         void setType(EventType type) { m_type = type; }
         EventType type() const { return m_type; }
@@ -23,7 +22,7 @@ namespace Net {
         bool isNoneEvent() const { return m_events == kNoneEvent; }
     protected:
         void update();
-        EventLoop* m_loop;
+        void sendProto(const Oimo::Packle::sPtr& packle, uint32_t serv);
         int m_fd {-1};
         EventType m_type {EventType::NEW};
         int m_events {0};

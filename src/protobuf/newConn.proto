@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package NetProto;
+
+message NewConn {
+    int32 fd = 1;
+    string ip = 2;
+    uint32 port = 3;
+}

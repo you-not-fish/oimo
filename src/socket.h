@@ -10,12 +10,13 @@ namespace Net{
         ~Socket();
 
         bool create(int domain, int type, int protocol);
+        void setFd(int fd) { m_fd = fd; }
         bool bind(const Address& addr);
         bool listen();
-        bool accept(Address& addr);
+        int accept(Address* addr);
         bool close();
         int fd() const { return m_fd; }
-
+        bool isValid() const { return m_fd != -1; }
         bool setNonBlocking(bool nonBlocking);
         bool setReuseAddr(bool reuseAddr);
         bool setReusePort(bool reusePort);

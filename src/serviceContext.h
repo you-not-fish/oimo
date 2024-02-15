@@ -11,10 +11,6 @@
 
 namespace Oimo {
     
-    enum class SystemMsgID : Packle::MsgID {
-        INIT = 0XFFFF
-    };
-    
     class ServiceContext {
     public:
         using sPtr = std::shared_ptr<ServiceContext>;

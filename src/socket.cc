@@ -40,16 +40,18 @@ namespace Net {
         return true;
     }
 
-    bool Socket::accept(Address& peerAddr) {
+    int Socket::accept(Address* peerAddr) {
         struct sockaddr_in addr;
         socklen_t addrLen = sizeof(addr);
         int fd = ::accept(m_fd, (struct sockaddr*)&addr, &addrLen);
         if (fd != -1) {
-            peerAddr.setAddr(addr);
-            return true;
+            if (peerAddr) {
+                peerAddr->setAddr(addr);
+            }
+            return fd;
         }
         LOG_FATAL << "accept failed : " << strerror(errno);
-        return false;
+        return -1;
     }
 
     bool Socket::close() {

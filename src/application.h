@@ -1,6 +1,7 @@
 #pragma once
 
 #include "service.h"
+#include "sysMsg.h"
 #include "log.h"
 #include "spinLock.h"
 #include <map>

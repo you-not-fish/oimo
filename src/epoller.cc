@@ -6,7 +6,7 @@
 
 namespace Oimo {
 namespace Net {
-    EPoller::EPoller() {
+    EPoller::EPoller() : m_events(MIN_EVENTS) {
         m_epfd = ::epoll_create1(EPOLL_CLOEXEC);
         if (m_epfd < 0) {
             LOG_FATAL << "epoll_create1 failed";
@@ -20,7 +20,7 @@ namespace Net {
     void EPoller::poll(std::vector<FdContext*>& activeFds) {
         int numEvents = ::epoll_wait(m_epfd, m_events.data(), m_events.size(), -1);
         if (numEvents < 0) {
-            LOG_ERROR << "epoll_wait failed";
+            LOG_ERROR << "epoll_wait failed : " << strerror(errno);
         }
         for (int i = 0; i < numEvents; ++i) {
             FdContext* ctx = static_cast<FdContext*>(m_events[i].data.ptr);

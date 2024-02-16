@@ -4,6 +4,7 @@
 #include "config.h"
 #include "queue.h"
 #include "singleton.h"
+#include "socketServer.h"
 #include "coroutine.h"
 #include "logThread.h"
 #include "socketThread.h"
@@ -21,6 +22,7 @@ namespace Oimo {
         Thread::setCurrentThreadName("main");
         Coroutine::t_mainCoroutine.reset(new Coroutine());
         Coroutine::setCurrentCoroutine(Coroutine::t_mainCoroutine);
+        Singleton<Net::SocketServer>::instance();
     }
 
     int Application::run() {

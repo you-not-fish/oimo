@@ -79,7 +79,7 @@ namespace Net {
         assert(ctx->isValid());
         assert(ctx->sockType() == SocketType::PLISTEN ||
             ctx->sockType() == SocketType::PACCEPT);
-        enableRead();
+        ctx->enableRead();
         if (ctx->sockType() == SocketType::PLISTEN) {
             ctx->setSockType(SocketType::LISTEN);
         } else {

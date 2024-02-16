@@ -8,6 +8,7 @@ namespace Net {
     EventLoop::~EventLoop() {}
 
     void EventLoop::loop() {
+        m_looping = true;
         while (m_looping) {
             m_activeFds.clear();
             m_poller.poll(m_activeFds);

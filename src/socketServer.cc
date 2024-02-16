@@ -12,6 +12,7 @@ namespace Net {
             return;
         }
         m_pipeCtx.setFds(fds[0], fds[1]);
+        m_loop.updateEvent(&m_pipeCtx);
     }
 }
 }

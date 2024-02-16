@@ -13,6 +13,7 @@ namespace Net {
         void setFds(int fd, int sendFd) {
             m_fd = fd;
             m_sendFd = sendFd;
+            m_events = kReadEvent;
         }
         void handleEvent() override;
         ssize_t writePipe(const char* data, size_t len);

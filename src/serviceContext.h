@@ -52,6 +52,8 @@ namespace Oimo {
         void setMessageQueue(PackleQueue::sPtr messageQueue) {
             m_messageQueue = messageQueue;
         }
+        void addFork(Coroutine::sPtr coroutine);
+        bool hasFork() const { return !m_forkingQueue.empty(); }
     protected:
         static thread_local ServiceContext::sPtr t_currentContext;
         std::string m_name;

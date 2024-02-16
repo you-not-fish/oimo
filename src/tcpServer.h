@@ -19,6 +19,7 @@ namespace Net {
         void start(ConnCb cb);
     private:
         void handleNewConn(Oimo::Packle::sPtr packle);
+        void handleRead(Oimo::Packle::sPtr packle);
         int m_listenFd;
         ConnCb m_cb;
         Oimo::Service* m_serv;

@@ -17,6 +17,7 @@ namespace Net {
         : FdContext(fd)
         , m_sock(fd)
         , m_serv(serv)
+        , m_readSize(1024)
         , m_sockType(SocketType::NEW)
         , m_sending(0) {}
 
@@ -28,6 +29,9 @@ namespace Net {
                 newConnection();
                 break;
             case SocketType::ACCEPT:
+                if (m_revents & EPOLLIN) {
+                    handleRead();
+                }
                 break;
             default:
                 break;
@@ -64,6 +68,40 @@ namespace Net {
         Packle::sPtr packle = std::make_shared<Packle>(
             (Packle::MsgID)SystemMsgID::NEWCONN);
         packle->serialize(newConn);
+        sendProto(packle, m_serv);
+    }
+
+    void SocketContext::handleRead() {
+        char *buf = new char[m_readSize];
+        ssize_t n;
+        for (;;) {
+            n = ::read(m_fd, buf, m_readSize);
+            if (n < 0) {
+                if (errno == EINTR) {
+                    continue;
+                }
+                LOG_ERROR << "read error: " << ::strerror(errno);
+                return;
+            }
+            break;
+        }
+        
+        if (n == 0) {
+            LOG_DEBUG << "peer closed";
+            // m_sock.close();
+            return;
+        }
+        LOG_DEBUG << "read " << n << " bytes";
+        if (n == m_readSize) {
+            m_readSize *= 2;
+        } else if (n < m_readSize / 2) {
+            m_readSize /= 2;
+        }
+        Packle::sPtr packle = std::make_shared<Packle>(
+            (Packle::MsgID)SystemMsgID::DATA);
+        packle->setSessionID(m_fd);
+        packle->setBuf(buf);
+        packle->setSize(n);
         sendProto(packle, m_serv);
     }
 

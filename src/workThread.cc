@@ -58,6 +58,9 @@ namespace Oimo {
                     assert(packle);
                     context->dispatch(packle);
                 }
+                if (context->hasFork() && !queue->isInGlobal()) {
+                    G.push(queue);
+                }
                 ServiceContext::setCurrentContext(nullptr);
             }
         }

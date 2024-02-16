@@ -24,6 +24,8 @@ namespace Net {
         m_serv = serv;
         m_serv->registerFunc((Packle::MsgID)SystemMsgID::NEWCONN,
             std::bind(&TcpServer::handleNewConn, this, std::placeholders::_1));
+        m_serv->registerFunc((Packle::MsgID)SystemMsgID::DATA,
+            std::bind(&TcpServer::handleRead, this, std::placeholders::_1));
     }
 
     int TcpServer::createFd(const std::string& ip, uint16_t port) {
@@ -92,6 +94,21 @@ namespace Net {
         ctx->setSockType(SocketType::PACCEPT);
         assert(m_cb);
         m_cb(conn);
+    }
+
+    void TcpServer::handleRead(Packle::sPtr packle) {
+        int fd = packle->sessionID();
+        char *buf = packle->buf();
+        size_t len = packle->size();
+        auto it = m_conns.find(fd);
+        if (it == m_conns.end()) {
+            LOG_ERROR << "TcpServer::handleRead: unknown fd";
+            return;
+        }
+        LOG_DEBUG << "TcpServer::handleRead: " << len << " bytes";
+        LOG_DEBUG << "TcpServer::handleRead: " << std::string(buf, len);
+        auto conn = it->second;
+        conn->append(buf, len);
     }
 } // Net
 }  // Oimo

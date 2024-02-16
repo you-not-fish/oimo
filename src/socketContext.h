@@ -32,8 +32,10 @@ namespace Net {
         uint32_t serv() const { return m_serv; }
     private:
         void newConnection();
+        void handleRead();
         Socket m_sock;
         uint32_t m_serv;
+        int m_readSize;
         SocketType m_sockType;
         std::atomic_int m_sending;
         std::list<WriteBuffer> m_wbList;

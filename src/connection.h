@@ -1,8 +1,9 @@
 #pragma once
 
-#include <memory>
+#include <vector>
 #include "ringBuffer.h"
 #include "address.h"
+#include "coroutine.h"
 
 namespace Oimo {
 namespace Net {
@@ -25,11 +26,13 @@ namespace Net {
         void close();
         size_t send(const char* data, size_t len);
         size_t recv(char* data, size_t len);
+        size_t append(const char* data, size_t len);
     private:
         int m_fd;
         bool m_closing;
         Address m_addr;
         RingBuffer m_buffer;
+        std::vector<Oimo::Coroutine::sPtr> m_cors;
     };
 } // Net
 }  // Oimo

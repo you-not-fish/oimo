@@ -1,3 +1,4 @@
+#include <cassert>
 #include "connection.h"
 #include "serviceContext.h"
 #include "ctrlMsg.h"
@@ -34,8 +35,22 @@ namespace Net {
     }
 
     size_t Connection::recv(char* data, size_t len) {
-        // TODO
-        return 0;
+        while (m_buffer.used() == 0) {
+            auto cor = Oimo::Coroutine::currentCoroutine();
+            m_cors.push_back(cor);
+            Oimo::Coroutine::yieldToSuspend();
+        }
+        return m_buffer.read(data, len);
+    }
+
+    size_t Connection::append(const char* data, size_t len) {
+        size_t n = m_buffer.write(data, len);
+        assert(n == len);
+        for (auto& cor : m_cors) {
+            Oimo::ServiceContext::currentContext()->addFork(cor);
+        }
+        m_cors.clear();
+        return n;
     }
 } // Net
 } // Oimo

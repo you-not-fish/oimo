@@ -184,4 +184,9 @@ namespace Oimo {
         }
         return nullptr;
     }
+
+    void ServiceContext::addFork(Coroutine::sPtr coroutine) {
+        assert(coroutine->state() == Coroutine::CoroutineState::SUSPENDED);
+        m_forkingQueue.push(coroutine);
+    }
 }

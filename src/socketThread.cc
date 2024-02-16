@@ -18,8 +18,7 @@ namespace Net {
     }
 
     void SocketThread::start() {
-        auto& server = Singleton<SocketServer>::instance();
-        server.eventLoop()->loop();
+        m_thread->start();
     }
 
     void SocketThread::join() {
@@ -29,6 +28,11 @@ namespace Net {
     void SocketThread::stop() {
         auto& server = Singleton<SocketServer>::instance();
         server.eventLoop()->stop();
+    }
+
+    void SocketThread::run() {
+        auto& server = Singleton<SocketServer>::instance();
+        server.eventLoop()->loop();
     }
 } // Net
 } // Oimo

@@ -35,8 +35,10 @@ namespace Net {
     }
 
     void SocketContext::reset(int fd, uint32_t serv) {
-        if (m_sock.isValid()) {
+        if (isValid()) {
             m_sock.close();
+            m_fd = -1;
+            assert(!isValid());
         }
         m_fd = fd;
         m_sock.setFd(fd);
@@ -53,6 +55,8 @@ namespace Net {
             LOG_ERROR << "accept error: " << ::strerror(errno);
             return;
         }
+        LOG_DEBUG << "new connection from " << addr.ipAsString()
+            << ":" << addr.portAsString();
         NetProto::NewConn newConn;
         newConn.set_fd(connFd);
         newConn.set_ip(addr.ipForNet());

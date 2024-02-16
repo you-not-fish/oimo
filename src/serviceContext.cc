@@ -127,7 +127,7 @@ namespace Oimo {
         assert(!Coroutine::isMainCoroutine());
         auto coroutine = Coroutine::currentCoroutine();
         auto self = currentContext();
-        auto sessionID = Coroutine::generateSid(self->serviceID());
+        auto sessionID = Coroutine::generateSid();
         packle->setSource(currentContext()->serviceID());
         packle->setSessionID(sessionID);
         dest->messageQueue()->push(packle);

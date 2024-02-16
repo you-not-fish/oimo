@@ -1,10 +1,9 @@
 #include <iostream>
-#include "../src/application.h"
-#include "../src/singleton.h"
-#include "../src/queue.h"
-#include "../src/thread.h"
-#include "../src/logThread.h"
-#include "../src/packle.h"
+#include <src/application.h>
+#include <src/singleton.h>
+#include <src/queue.h>
+#include <src/logThread.h>
+#include <src/packle.h>
 #include "protobuf/test.pb.h"
 
 using namespace Oimo;

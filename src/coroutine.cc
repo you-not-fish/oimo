@@ -1,4 +1,5 @@
 #include <cassert>
+#include <random>
 #include "log.h"
 #include "singleton.h"
 #include "config.h"
@@ -76,12 +77,11 @@ namespace Oimo {
         initContext();
     }
 
-    Coroutine::SessionID Coroutine::generateSid(uint32_t n) {
-        Coroutine::SessionID s = 0;
-        uint16_t now = (uint16_t)time(nullptr);
-        uint16_t tid = (uint16_t)Thread::currentThreadID();
-        s = (now << 8) | (tid & 0x00F0) | (n & 0x000F);
-        return s;
+    Coroutine::SessionID Coroutine::generateSid() {
+        static std::random_device rd;
+        static std::mt19937 gen(rd());
+        static std::uniform_int_distribution<SessionID> dis(1, 65535);
+        return dis(gen);
     }
 
     void Coroutine::resume(Coroutine::sPtr coroutine) {

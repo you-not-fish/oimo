@@ -35,7 +35,7 @@ namespace Oimo {
 
     void Application::stop() {
         Singleton<Net::SocketThread>::instance().stop();
-        Singleton<LogThread>::instance().stop();
         Singleton<WorkThread>::instance().stop();
+        Singleton<LogThread>::instance().stop();
     }
 }

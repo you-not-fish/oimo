@@ -1,8 +1,8 @@
 #include <iostream>
 #include <vector>
-#include "../src/application.h"
-#include "../src/singleton.h"
-#include "../src/logThread.h"
+#include <src/application.h>
+#include <src/singleton.h>
+#include <src/logThread.h>
 
 using namespace Oimo;
 

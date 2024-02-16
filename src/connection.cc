@@ -13,7 +13,7 @@ namespace Net {
         ctrl.head[7] = len;
         ctrl.msg.start.fd = m_fd;
         auto self = Oimo::ServiceContext::currentContext();
-        Oimo::Coroutine::SessionID sid = Oimo::Coroutine::generateSid(self->serviceID());
+        Oimo::Coroutine::SessionID sid = Oimo::Coroutine::generateSid();
         ctrl.msg.start.session = sid;
         auto cor = Oimo::Coroutine::currentCoroutine();
         cor->setSid(sid);
@@ -23,11 +23,19 @@ namespace Net {
         );
         Oimo::Coroutine::yieldToSuspend();
     }
+
     void Connection::close() {
         // TODO
     }
+
     size_t Connection::send(const char* data, size_t len) {
         // TODO
+        return 0;
     }
-}
-}
+
+    size_t Connection::recv(char* data, size_t len) {
+        // TODO
+        return 0;
+    }
+} // Net
+} // Oimo

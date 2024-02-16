@@ -8,8 +8,12 @@ namespace Oimo {
 namespace Net {
     class PipeContext : public FdContext {
     public:
-        PipeContext(int fd, int sendFd);
+        PipeContext(int fdv = -1, int sendFd = -1);
         ~PipeContext();
+        void setFds(int fd, int sendFd) {
+            m_fd = fd;
+            m_sendFd = sendFd;
+        }
         void handleEvent() override;
         ssize_t writePipe(const char* data, size_t len);
     private:

@@ -10,7 +10,6 @@ namespace Net {
     class SocketServer {
     public:
         SocketServer();
-        ~SocketServer();
         EventLoop* eventLoop() { return &m_loop; }
         ssize_t sendCtrl(const char *data, size_t len) {
             return m_pipeCtx.writePipe(data, len);

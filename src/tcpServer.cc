@@ -14,20 +14,19 @@
 
 namespace Oimo {
 namespace Net {
-    TcpServer::TcpServer(Oimo::Service* serv)
-        : m_listenFd(-1)
-        , m_serv(serv) {
-        assert(m_serv != nullptr);
+    TcpServer::TcpServer()
+        : m_listenFd(-1) {
         
     }
     TcpServer::~TcpServer() {}
 
-    void TcpServer::init() {
+    void TcpServer::init(Oimo::Service* serv) {
+        m_serv = serv;
         m_serv->registerFunc((Packle::MsgID)SystemMsgID::NEWCONN,
             std::bind(&TcpServer::handleNewConn, this, std::placeholders::_1));
     }
 
-    int TcpServer::initFd(const std::string& ip, uint16_t port) {
+    int TcpServer::createFd(const std::string& ip, uint16_t port) {
         if (m_listenFd != -1) {
             LOG_WARN << "TcpServer already initialized";
             return m_listenFd;
@@ -67,7 +66,7 @@ namespace Net {
         ctrl.head[6] = (uint8_t)'S';
         ctrl.head[7] = len;
         ctrl.msg.start.fd = m_listenFd;
-        Oimo::Coroutine::SessionID sid = Oimo::Coroutine::generateSid(m_serv->id());
+        Oimo::Coroutine::SessionID sid = Oimo::Coroutine::generateSid();
         ctrl.msg.start.session = sid;
         auto self = Oimo::ServiceContext::currentContext();
         auto cor = Oimo::Coroutine::currentCoroutine();

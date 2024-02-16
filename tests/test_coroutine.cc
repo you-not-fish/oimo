@@ -1,8 +1,8 @@
 #include <iostream>
-#include "../src/application.h"
-#include "../src/singleton.h"
-#include "../src/logThread.h"
-#include "../src/coroutine.h"
+#include <src/application.h>
+#include <src/singleton.h>
+#include <src/logThread.h>
+#include <src/coroutine.h>
 
 using namespace Oimo;
 

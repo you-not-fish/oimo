@@ -1,10 +1,10 @@
 #include <iostream>
 #include <cassert>
-#include "../src/application.h"
-#include "../src/queue.h"
-#include "../src/sysMsg.h"
-#include "../src/thread.h"
-#include "../src/singleton.h"
+#include <src/application.h>
+#include <src/queue.h>
+#include <src/sysMsg.h>
+#include <src/thread.h>
+#include <src/singleton.h>
 #include "protobuf/response.pb.h"
 
 using namespace Oimo;

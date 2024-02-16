@@ -1,10 +1,10 @@
 #include <iostream>
 #include <memory>
-#include "../src/application.h"
-#include "../src/logThread.h"
-#include "../src/config.h"
-#include "../src/singleton.h"
-#include "../src/thread.h"
+#include <src/application.h>
+#include <src/logThread.h>
+#include <src/config.h>
+#include <src/singleton.h>
+#include <src/thread.h>
 
 using namespace Oimo;
 

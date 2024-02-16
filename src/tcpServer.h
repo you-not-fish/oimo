@@ -12,10 +12,10 @@ namespace Net {
     class TcpServer {
     public:
         using ConnCb = std::function<void(Connection::sPtr)>;
-        TcpServer(Oimo::Service* serv);
+        TcpServer();
         ~TcpServer();
-        void init();
-        int initFd(const std::string& ip, uint16_t port);
+        void init(Oimo::Service* serv);
+        int createFd(const std::string& ip, uint16_t port);
         void start(ConnCb cb);
     private:
         void handleNewConn(Oimo::Packle::sPtr packle);

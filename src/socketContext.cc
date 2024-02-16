@@ -55,8 +55,8 @@ namespace Net {
         }
         NetProto::NewConn newConn;
         newConn.set_fd(connFd);
-        newConn.set_ip(addr.ipAsString());
-        newConn.set_port(addr.portForHost());
+        newConn.set_ip(addr.ipForNet());
+        newConn.set_port(addr.portForNet());
         Packle::sPtr packle = std::make_shared<Packle>(
             (Packle::MsgID)SystemMsgID::NEWCONN);
         packle->serialize(newConn);

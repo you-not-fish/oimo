@@ -6,6 +6,7 @@
 #include "singleton.h"
 #include "coroutine.h"
 #include "logThread.h"
+#include "socketThread.h"
 #include "workThread.h"
 
 namespace Oimo {
@@ -25,12 +26,15 @@ namespace Oimo {
     int Application::run() {
         Singleton<LogThread>::instance().start();
         Singleton<WorkThread>::instance().start();
+        Singleton<Net::SocketThread>::instance().start();
+        Singleton<Net::SocketThread>::instance().join();
         Singleton<WorkThread>::instance().join();
         Singleton<LogThread>::instance().join();
         return 0;
     }
 
     void Application::stop() {
+        Singleton<Net::SocketThread>::instance().stop();
         Singleton<LogThread>::instance().stop();
         Singleton<WorkThread>::instance().stop();
     }

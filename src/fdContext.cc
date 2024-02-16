@@ -21,7 +21,7 @@ namespace Net {
     FdContext::~FdContext() {}
 
     void FdContext::update() {
-        auto loop = Singleton<SocketServer>::instance().loop();
+        auto loop = Singleton<SocketServer>::instance().eventLoop();
         loop->updateEvent(this);
     }
 

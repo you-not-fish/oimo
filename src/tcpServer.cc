@@ -10,6 +10,7 @@
 #include "socketContext.h"
 #include "socketServer.h"
 #include "tcpServer.h"
+#include "protobuf/newConn.pb.h"
 
 namespace Oimo {
 namespace Net {
@@ -23,9 +24,7 @@ namespace Net {
 
     void TcpServer::init() {
         m_serv->registerFunc((Packle::MsgID)SystemMsgID::NEWCONN,
-            std::bind(&TcpServer::handleNewConn, this));
-        m_serv->registerFunc((Packle::MsgID)SystemMsgID::LISTENREADY,
-            std::bind(&TcpServer::handleListenReady, this));
+            std::bind(&TcpServer::handleNewConn, this, std::placeholders::_1));
     }
 
     int TcpServer::initFd(const std::string& ip, uint16_t port) {
@@ -57,11 +56,12 @@ namespace Net {
         return m_listenFd;
     }
 
-    void TcpServer::start() {
+    void TcpServer::start(ConnCb cb) {
         if (m_listenFd == -1) {
             LOG_FATAL << "TcpServer not initialized";
             return;
         }
+        m_cb = cb;
         struct CtrlPacket ctrl;
         uint8_t len = sizeof(struct StartCtrl);
         ctrl.head[6] = (uint8_t)'S';
@@ -79,12 +79,20 @@ namespace Net {
         Oimo::Coroutine::yieldToSuspend();
     }
 
-    void TcpServer::handleNewConn() {
-        
-    }
-
-    void TcpServer::handleListenReady() {
-        
+    void TcpServer::handleNewConn(Packle::sPtr packle) {
+        NetProto::NewConn newConn = packle->deserialize<NetProto::NewConn>();
+        int fd = newConn.fd();
+        uint32_t ip = newConn.ip();
+        uint16_t port = newConn.port();
+        Connection::sPtr conn = std::make_shared<Connection>(fd, ip, port);
+        assert(m_conns.find(fd) == m_conns.end());
+        m_conns[fd] = conn;
+        auto ctx = Singleton<SocketServer>::instance().getSocketContext(fd);
+        assert(!ctx->isValid());
+        ctx->reset(fd, m_serv->id());
+        ctx->setSockType(SocketType::PACCEPT);
+        assert(m_cb);
+        m_cb(conn);
     }
 } // Net
 }  // Oimo

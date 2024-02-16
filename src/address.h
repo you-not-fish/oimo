@@ -11,6 +11,7 @@ namespace Net {
         Address();
         Address(uint16_t port);
         Address(const std::string& ip, uint16_t port);
+        Address(uint32_t ip, uint16_t port);
         Address(const struct sockaddr_in& address);
         ~Address();
 

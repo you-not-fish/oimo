@@ -77,9 +77,15 @@ namespace Net {
         int fd = ctrl->fd;
         auto ctx = Singleton<SocketServer>::instance().getSocketContext(fd);
         assert(ctx->isValid());
-        assert(ctx->sockType() == SocketType::PLISTEN);
+        assert(ctx->sockType() == SocketType::PLISTEN ||
+            ctx->sockType() == SocketType::PACCEPT);
         enableRead();
-        ctx->setSockType(SocketType::LISTEN);
+        if (ctx->sockType() == SocketType::PLISTEN) {
+            ctx->setSockType(SocketType::LISTEN);
+        } else {
+            ctx->setSockType(SocketType::ACCEPT);
+        }
+        
         Packle::sPtr packle = std::make_shared<Packle>((Packle::MsgID)SystemMsgID::LISTENREADY);
         packle->setSessionID(ctrl->session);
         packle->setIsRet(true);

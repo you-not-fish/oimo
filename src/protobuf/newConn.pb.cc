@@ -23,8 +23,8 @@ namespace _pbi = _pb::internal;
 namespace NetProto {
 PROTOBUF_CONSTEXPR NewConn::NewConn(
     ::_pbi::ConstantInitialized): _impl_{
-    /*decltype(_impl_.ip_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
-  , /*decltype(_impl_.fd_)*/0
+    /*decltype(_impl_.fd_)*/0
+  , /*decltype(_impl_.ip_)*/0u
   , /*decltype(_impl_.port_)*/0u
   , /*decltype(_impl_._cached_size_)*/{}} {}
 struct NewConnDefaultTypeInternal {
@@ -62,7 +62,7 @@ static const ::_pb::Message* const file_default_instances[] = {
 
 const char descriptor_table_protodef_newConn_2eproto[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) =
   "\n\rnewConn.proto\022\010NetProto\"/\n\007NewConn\022\n\n\002"
-  "fd\030\001 \001(\005\022\n\n\002ip\030\002 \001(\t\022\014\n\004port\030\003 \001(\rb\006prot"
+  "fd\030\001 \001(\005\022\n\n\002ip\030\002 \001(\r\022\014\n\004port\030\003 \001(\rb\006prot"
   "o3"
   ;
 static ::_pbi::once_flag descriptor_table_newConn_2eproto_once;
@@ -98,20 +98,12 @@ NewConn::NewConn(const NewConn& from)
   : ::PROTOBUF_NAMESPACE_ID::Message() {
   NewConn* const _this = this; (void)_this;
   new (&_impl_) Impl_{
-      decltype(_impl_.ip_){}
-    , decltype(_impl_.fd_){}
+      decltype(_impl_.fd_){}
+    , decltype(_impl_.ip_){}
     , decltype(_impl_.port_){}
     , /*decltype(_impl_._cached_size_)*/{}};
 
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
-  _impl_.ip_.InitDefault();
-  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
-    _impl_.ip_.Set("", GetArenaForAllocation());
-  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
-  if (!from._internal_ip().empty()) {
-    _this->_impl_.ip_.Set(from._internal_ip(), 
-      _this->GetArenaForAllocation());
-  }
   ::memcpy(&_impl_.fd_, &from._impl_.fd_,
     static_cast<size_t>(reinterpret_cast<char*>(&_impl_.port_) -
     reinterpret_cast<char*>(&_impl_.fd_)) + sizeof(_impl_.port_));
@@ -123,15 +115,11 @@ inline void NewConn::SharedCtor(
   (void)arena;
   (void)is_message_owned;
   new (&_impl_) Impl_{
-      decltype(_impl_.ip_){}
-    , decltype(_impl_.fd_){0}
+      decltype(_impl_.fd_){0}
+    , decltype(_impl_.ip_){0u}
     , decltype(_impl_.port_){0u}
     , /*decltype(_impl_._cached_size_)*/{}
   };
-  _impl_.ip_.InitDefault();
-  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
-    _impl_.ip_.Set("", GetArenaForAllocation());
-  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
 }
 
 NewConn::~NewConn() {
@@ -145,7 +133,6 @@ NewConn::~NewConn() {
 
 inline void NewConn::SharedDtor() {
   GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
-  _impl_.ip_.Destroy();
 }
 
 void NewConn::SetCachedSize(int size) const {
@@ -158,7 +145,6 @@ void NewConn::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  _impl_.ip_.ClearToEmpty();
   ::memset(&_impl_.fd_, 0, static_cast<size_t>(
       reinterpret_cast<char*>(&_impl_.port_) -
       reinterpret_cast<char*>(&_impl_.fd_)) + sizeof(_impl_.port_));
@@ -179,13 +165,11 @@ const char* NewConn::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) 
         } else
           goto handle_unusual;
         continue;
-      // string ip = 2;
+      // uint32 ip = 2;
       case 2:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 18)) {
-          auto str = _internal_mutable_ip();
-          ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 16)) {
+          _impl_.ip_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
           CHK_(ptr);
-          CHK_(::_pbi::VerifyUTF8(str, "NetProto.NewConn.ip"));
         } else
           goto handle_unusual;
         continue;
@@ -232,14 +216,10 @@ uint8_t* NewConn::_InternalSerialize(
     target = ::_pbi::WireFormatLite::WriteInt32ToArray(1, this->_internal_fd(), target);
   }
 
-  // string ip = 2;
-  if (!this->_internal_ip().empty()) {
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
-      this->_internal_ip().data(), static_cast<int>(this->_internal_ip().length()),
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
-      "NetProto.NewConn.ip");
-    target = stream->WriteStringMaybeAliased(
-        2, this->_internal_ip(), target);
+  // uint32 ip = 2;
+  if (this->_internal_ip() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteUInt32ToArray(2, this->_internal_ip(), target);
   }
 
   // uint32 port = 3;
@@ -264,16 +244,14 @@ size_t NewConn::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // string ip = 2;
-  if (!this->_internal_ip().empty()) {
-    total_size += 1 +
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
-        this->_internal_ip());
-  }
-
   // int32 fd = 1;
   if (this->_internal_fd() != 0) {
     total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_fd());
+  }
+
+  // uint32 ip = 2;
+  if (this->_internal_ip() != 0) {
+    total_size += ::_pbi::WireFormatLite::UInt32SizePlusOne(this->_internal_ip());
   }
 
   // uint32 port = 3;
@@ -299,11 +277,11 @@ void NewConn::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOB
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (!from._internal_ip().empty()) {
-    _this->_internal_set_ip(from._internal_ip());
-  }
   if (from._internal_fd() != 0) {
     _this->_internal_set_fd(from._internal_fd());
+  }
+  if (from._internal_ip() != 0) {
+    _this->_internal_set_ip(from._internal_ip());
   }
   if (from._internal_port() != 0) {
     _this->_internal_set_port(from._internal_port());
@@ -324,13 +302,7 @@ bool NewConn::IsInitialized() const {
 
 void NewConn::InternalSwap(NewConn* other) {
   using std::swap;
-  auto* lhs_arena = GetArenaForAllocation();
-  auto* rhs_arena = other->GetArenaForAllocation();
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
-  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
-      &_impl_.ip_, lhs_arena,
-      &other->_impl_.ip_, rhs_arena
-  );
   ::PROTOBUF_NAMESPACE_ID::internal::memswap<
       PROTOBUF_FIELD_OFFSET(NewConn, _impl_.port_)
       + sizeof(NewConn::_impl_.port_)

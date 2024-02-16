@@ -177,24 +177,10 @@ class NewConn final :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kIpFieldNumber = 2,
     kFdFieldNumber = 1,
+    kIpFieldNumber = 2,
     kPortFieldNumber = 3,
   };
-  // string ip = 2;
-  void clear_ip();
-  const std::string& ip() const;
-  template <typename ArgT0 = const std::string&, typename... ArgT>
-  void set_ip(ArgT0&& arg0, ArgT... args);
-  std::string* mutable_ip();
-  PROTOBUF_NODISCARD std::string* release_ip();
-  void set_allocated_ip(std::string* ip);
-  private:
-  const std::string& _internal_ip() const;
-  inline PROTOBUF_ALWAYS_INLINE void _internal_set_ip(const std::string& value);
-  std::string* _internal_mutable_ip();
-  public:
-
   // int32 fd = 1;
   void clear_fd();
   int32_t fd() const;
@@ -202,6 +188,15 @@ class NewConn final :
   private:
   int32_t _internal_fd() const;
   void _internal_set_fd(int32_t value);
+  public:
+
+  // uint32 ip = 2;
+  void clear_ip();
+  uint32_t ip() const;
+  void set_ip(uint32_t value);
+  private:
+  uint32_t _internal_ip() const;
+  void _internal_set_ip(uint32_t value);
   public:
 
   // uint32 port = 3;
@@ -221,8 +216,8 @@ class NewConn final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
-    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr ip_;
     int32_t fd_;
+    uint32_t ip_;
     uint32_t port_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
@@ -260,54 +255,24 @@ inline void NewConn::set_fd(int32_t value) {
   // @@protoc_insertion_point(field_set:NetProto.NewConn.fd)
 }
 
-// string ip = 2;
+// uint32 ip = 2;
 inline void NewConn::clear_ip() {
-  _impl_.ip_.ClearToEmpty();
+  _impl_.ip_ = 0u;
 }
-inline const std::string& NewConn::ip() const {
+inline uint32_t NewConn::_internal_ip() const {
+  return _impl_.ip_;
+}
+inline uint32_t NewConn::ip() const {
   // @@protoc_insertion_point(field_get:NetProto.NewConn.ip)
   return _internal_ip();
 }
-template <typename ArgT0, typename... ArgT>
-inline PROTOBUF_ALWAYS_INLINE
-void NewConn::set_ip(ArgT0&& arg0, ArgT... args) {
- 
- _impl_.ip_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+inline void NewConn::_internal_set_ip(uint32_t value) {
+  
+  _impl_.ip_ = value;
+}
+inline void NewConn::set_ip(uint32_t value) {
+  _internal_set_ip(value);
   // @@protoc_insertion_point(field_set:NetProto.NewConn.ip)
-}
-inline std::string* NewConn::mutable_ip() {
-  std::string* _s = _internal_mutable_ip();
-  // @@protoc_insertion_point(field_mutable:NetProto.NewConn.ip)
-  return _s;
-}
-inline const std::string& NewConn::_internal_ip() const {
-  return _impl_.ip_.Get();
-}
-inline void NewConn::_internal_set_ip(const std::string& value) {
-  
-  _impl_.ip_.Set(value, GetArenaForAllocation());
-}
-inline std::string* NewConn::_internal_mutable_ip() {
-  
-  return _impl_.ip_.Mutable(GetArenaForAllocation());
-}
-inline std::string* NewConn::release_ip() {
-  // @@protoc_insertion_point(field_release:NetProto.NewConn.ip)
-  return _impl_.ip_.Release();
-}
-inline void NewConn::set_allocated_ip(std::string* ip) {
-  if (ip != nullptr) {
-    
-  } else {
-    
-  }
-  _impl_.ip_.SetAllocated(ip, GetArenaForAllocation());
-#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
-  if (_impl_.ip_.IsDefault()) {
-    _impl_.ip_.Set("", GetArenaForAllocation());
-  }
-#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
-  // @@protoc_insertion_point(field_set_allocated:NetProto.NewConn.ip)
 }
 
 // uint32 port = 3;

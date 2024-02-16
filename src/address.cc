@@ -24,6 +24,12 @@ namespace Net {
         m_addr.sin_port = htons(port);
     }
 
+    Address::Address(uint32_t ip, uint16_t port) {
+        m_addr.sin_family = AF_INET;
+        m_addr.sin_addr.s_addr = ip;
+        m_addr.sin_port = htons(port);
+    }
+
     Address::Address(const struct sockaddr_in& address) {
         m_addr = address;
     }

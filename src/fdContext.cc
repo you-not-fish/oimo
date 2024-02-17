@@ -2,7 +2,6 @@
 #include <sys/epoll.h>
 #include "fdContext.h"
 #include "eventloop.h"
-#include "singleton.h"
 #include "serviceContextMgr.h"
 #include "socketServer.h"
 #include "socketState.h"
@@ -21,7 +20,7 @@ namespace Net {
     FdContext::~FdContext() {}
 
     void FdContext::update() {
-        auto loop = Singleton<SocketServer>::instance().eventLoop();
+        auto loop = GSocketServer::instance().eventLoop();
         loop->updateEvent(this);
     }
 

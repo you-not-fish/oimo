@@ -1,5 +1,6 @@
 #pragma once
 
+#include "singleton.h"
 #include "socketContext.h"
 #include "pipeContext.h"
 #include "eventloop.h"
@@ -20,5 +21,6 @@ namespace Net {
         PipeContext m_pipeCtx;
         EventLoop m_loop;
     };
+    using GSocketServer = Singleton<SocketServer>;
 }  // Net
 }  // Oimo

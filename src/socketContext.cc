@@ -18,8 +18,7 @@ namespace Net {
         , m_sock(fd)
         , m_serv(serv)
         , m_readSize(1024)
-        , m_sockType(SocketType::NEW)
-        , m_sending(0) {}
+        , m_sockType(SocketType::NEW) {}
 
     SocketContext::~SocketContext() {}
     void SocketContext::handleEvent() {
@@ -31,6 +30,9 @@ namespace Net {
             case SocketType::ACCEPT:
                 if (m_revents & EPOLLIN) {
                     handleRead();
+                }
+                if (m_revents & EPOLLOUT) {
+                    handleWrite();
                 }
                 break;
             default:
@@ -48,7 +50,6 @@ namespace Net {
         m_sock.setFd(fd);
         m_serv = serv;
         m_sockType = SocketType::NEW;
-        m_sending = 0;
         m_wbList.clear();
     }
 
@@ -103,6 +104,59 @@ namespace Net {
         packle->setBuf(buf);
         packle->setSize(n);
         sendProto(packle, m_serv);
+    }
+
+    bool SocketContext::writeWB() {
+        while (!m_wbList0.empty()) {
+            auto &wb = m_wbList0.front();
+            ssize_t n = ::write(m_fd, wb.buf + wb.pos, wb.size - wb.pos);
+            if (n < 0) {
+                if (errno == EINTR) {
+                    continue;
+                }
+                if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                    return false;
+                }
+                LOG_ERROR << "write error: " << ::strerror(errno);
+                return false;
+            }
+            wb.pos += n;
+            if (wb.pos == wb.size) {
+                delete[] wb.buf;
+                m_wbList0.pop_front();
+            }
+        }
+        return true;
+    }
+
+    void SocketContext::handleWrite() {
+        if (writeWB()) {
+            {
+                Oimo::SpinLockGuard guard(m_lock);
+                m_wbList0.swap(m_wbList);
+            }
+            writeWB();
+            Oimo::SpinLockGuard guard(m_lock);
+            if (m_wbList0.empty() && m_wbList.empty()) {
+                disableWrite();
+            }
+        }
+    }
+
+    size_t SocketContext::write(const char *buffer, size_t len, bool needCopy) {
+        char *buf = nullptr;
+        if (needCopy) {
+            buf = new char[len];
+            ::memcpy(buf, buffer, len);
+        } else {
+            buf = const_cast<char*>(buffer);
+        }
+        Oimo::SpinLockGuard guard(m_lock);
+        m_wbList.push_back({buf, len, 0});
+        if (!isWriting()) {
+            enableWrite();
+        }
+        return len;
     }
 
 }  // Net

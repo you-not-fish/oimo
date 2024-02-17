@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include "packle.h"
 #include "ringBuffer.h"
 #include "address.h"
 #include "coroutine.h"
@@ -25,6 +26,7 @@ namespace Net {
         void start();
         void close();
         size_t send(const char* data, size_t len);
+        size_t send(Oimo::Packle::sPtr packle);
         size_t recv(char* data, size_t len);
         size_t append(const char* data, size_t len);
     private:

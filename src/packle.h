@@ -82,6 +82,13 @@ namespace Oimo {
             m_buf = buf;
         }
 
+        char* getAndResetBuf() {
+            char* buf = m_buf;
+            m_buf = nullptr;
+            m_size = 0;
+            return buf;
+        }
+
         void setSize(size_t size) {
             m_size = size;
         }

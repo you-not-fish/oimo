@@ -19,7 +19,7 @@ namespace Net {
         auto cor = Oimo::Coroutine::currentCoroutine();
         cor->setSid(sid);
         self->suspend(cor);
-        Singleton<SocketServer>::instance().sendCtrl(
+        GSocketServer::instance().sendCtrl(
             reinterpret_cast<char*>(ctrl.head+6), len+2
         );
         Oimo::Coroutine::yieldToSuspend();
@@ -30,8 +30,19 @@ namespace Net {
     }
 
     size_t Connection::send(const char* data, size_t len) {
-        // TODO
+        auto ctx = GSocketServer::instance().getSocketContext(m_fd);
+        assert(ctx->isValid());
+        ctx->write(data, len, true);
         return 0;
+    }
+
+    size_t Connection::send(Oimo::Packle::sPtr packle) {
+        auto ctx = GSocketServer::instance().getSocketContext(m_fd);
+        assert(ctx->isValid());
+        auto size = packle->size();
+        auto buf = packle->getAndResetBuf();
+        ctx->write(buf, size, false);
+        return size;
     }
 
     size_t Connection::recv(char* data, size_t len) {

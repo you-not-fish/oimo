@@ -19,9 +19,12 @@ public:
         LOG_INFO << "new connection from " << addr.ipAsString() << ":" << addr.portAsString();
         conn->start();
         char buf[1024];
-        int n = conn->recv(buf, 1024);
-        if (n > 0) {
-            LOG_INFO << "recv: " << std::string(buf, n);
+        while (true) {
+            int n = conn->recv(buf, 1024);
+            if (n > 0) {
+                LOG_INFO << "recv: " << std::string(buf, n);
+                conn->send(buf, n);
+            }
         }
     }
     private:

@@ -13,6 +13,8 @@ namespace Net {
         EventType type() const { return m_type; }
         int events() const { return m_events; }
         void setRevents(int revents) { m_revents = revents; }
+        bool isWriting() const { return m_events & kWriteEvent; }
+        bool isReading() const { return m_events & kReadEvent; }
         void enableRead() { m_events |= kReadEvent;update();}
         void disableRead() { m_events &= ~kReadEvent;update();}
         void enableWrite() { m_events |= kWriteEvent;update();}

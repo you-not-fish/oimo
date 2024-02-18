@@ -22,6 +22,10 @@ namespace Net {
 
     SocketContext::~SocketContext() {}
     void SocketContext::handleEvent() {
+        if (m_revents & EPOLLHUP) {
+            LOG_ERROR << "socket error";
+            return;
+        }
         switch (m_sockType) {
             case SocketType::LISTEN:
                 assert(m_revents & EPOLLIN);
@@ -89,7 +93,8 @@ namespace Net {
         
         if (n == 0) {
             LOG_DEBUG << "peer closed";
-            // m_sock.close();
+            m_sock.shutdownRead();
+            disableRead();
             return;
         }
         LOG_DEBUG << "read " << n << " bytes";
@@ -106,52 +111,39 @@ namespace Net {
         sendProto(packle, m_serv);
     }
 
-    bool SocketContext::writeWB() {
-        while (!m_wbList0.empty()) {
-            auto &wb = m_wbList0.front();
+    int SocketContext::writeWB() {
+        while (!m_wbList.empty()) {
+            auto &wb = m_wbList.front();
             ssize_t n = ::write(m_fd, wb.buf + wb.pos, wb.size - wb.pos);
             if (n < 0) {
                 if (errno == EINTR) {
                     continue;
                 }
                 if (errno == EAGAIN || errno == EWOULDBLOCK) {
-                    return false;
+                    return 1;
                 }
                 LOG_ERROR << "write error: " << ::strerror(errno);
-                return false;
+                return -1;
             }
             wb.pos += n;
             if (wb.pos == wb.size) {
                 delete[] wb.buf;
-                m_wbList0.pop_front();
+                m_wbList.pop_front();
             }
         }
-        return true;
+        return 0;
     }
 
     void SocketContext::handleWrite() {
-        if (writeWB()) {
-            {
-                Oimo::SpinLockGuard guard(m_lock);
-                m_wbList0.swap(m_wbList);
-            }
-            writeWB();
-            Oimo::SpinLockGuard guard(m_lock);
-            if (m_wbList0.empty() && m_wbList.empty()) {
-                disableWrite();
-            }
+        int ret = writeWB();
+        if (ret == 0) {
+            disableWrite();
+        } else if (ret < 0) {
+            // TODO
         }
     }
 
-    size_t SocketContext::write(const char *buffer, size_t len, bool needCopy) {
-        char *buf = nullptr;
-        if (needCopy) {
-            buf = new char[len];
-            ::memcpy(buf, buffer, len);
-        } else {
-            buf = const_cast<char*>(buffer);
-        }
-        Oimo::SpinLockGuard guard(m_lock);
+    size_t SocketContext::appendWB(char *buf, size_t len) {
         m_wbList.push_back({buf, len, 0});
         if (!isWriting()) {
             enableWrite();

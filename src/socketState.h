@@ -13,7 +13,9 @@ namespace Net {
         LISTEN,
         PACCEPT,
         ACCEPT,
-        DELETE
+        DELETE,
+        HALFCLOSE_READ,
+        HALFCLOSE_WRITE
     };
 
     inline const char* SocketType2String(SocketType type) {

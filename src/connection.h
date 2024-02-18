@@ -30,6 +30,7 @@ namespace Net {
         size_t recv(char* data, size_t len);
         size_t append(const char* data, size_t len);
     private:
+        void sendToSocket(const char *buf, size_t len, bool needCopy);
         int m_fd;
         bool m_closing;
         Address m_addr;

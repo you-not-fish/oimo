@@ -96,5 +96,23 @@ namespace Net {
         int opt = noDelay ? 1 : 0;
         return ::setsockopt(m_fd, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof(opt)) != -1;
     }
+
+    bool Socket::shutdownRead() {
+        int ret = ::shutdown(m_fd, SHUT_RD);
+        if (ret == -1) {
+            LOG_ERROR << "shutdown read failed : " << strerror(errno);
+            return false;
+        }
+        return true;
+    }
+
+    bool Socket::shutdownWrite() {
+        int ret = ::shutdown(m_fd, SHUT_WR);
+        if (ret == -1) {
+            LOG_ERROR << "shutdown write failed : " << strerror(errno);
+            return false;
+        }
+        return true;
+    }
 } // namespace Net
 } // namespace Oimo

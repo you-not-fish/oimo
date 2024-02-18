@@ -1,4 +1,5 @@
 #include <cassert>
+#include <cstring>
 #include "connection.h"
 #include "serviceContext.h"
 #include "ctrlMsg.h"
@@ -29,19 +30,36 @@ namespace Net {
         // TODO
     }
 
+    void Connection::sendToSocket(const char *buf, size_t len, bool needCopy) {
+        char *data = nullptr;
+        if (needCopy) {
+            data = new char[len];
+            ::memcpy(data, buf, len);
+        } else {
+            data = const_cast<char*>(buf);
+        }
+        struct CtrlPacket ctrl;
+        uint8_t size = sizeof(struct DataCtrl);
+        ctrl.head[6] = (uint8_t)'D';
+        ctrl.head[7] = size;
+        ctrl.msg.data.fd = m_fd;
+        ctrl.msg.data.buf = data;
+        ctrl.msg.data.len = len;
+        auto self = Oimo::ServiceContext::currentContext();
+        GSocketServer::instance().sendCtrl(
+            reinterpret_cast<char*>(ctrl.head+6), size+2
+        );
+    }
+
     size_t Connection::send(const char* data, size_t len) {
-        auto ctx = GSocketServer::instance().getSocketContext(m_fd);
-        assert(ctx->isValid());
-        ctx->write(data, len, true);
-        return 0;
+        sendToSocket(data, len, true);
+        return len;
     }
 
     size_t Connection::send(Oimo::Packle::sPtr packle) {
-        auto ctx = GSocketServer::instance().getSocketContext(m_fd);
-        assert(ctx->isValid());
         auto size = packle->size();
         auto buf = packle->getAndResetBuf();
-        ctx->write(buf, size, false);
+        sendToSocket(buf, size, false);
         return size;
     }
 

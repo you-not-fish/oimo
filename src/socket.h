@@ -22,6 +22,8 @@ namespace Net{
         bool setReusePort(bool reusePort);
         bool setKeepAlive(bool keepAlive);
         bool setNoDelay(bool noDelay);
+        bool shutdownRead();
+        bool shutdownWrite();
     private:
         int m_fd { -1 };
     };

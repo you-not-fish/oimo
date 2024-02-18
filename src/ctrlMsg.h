@@ -8,10 +8,18 @@ namespace Net {
         int fd;
         uint16_t session;
     };
+
+    struct DataCtrl {
+        int fd;
+        char *buf;
+        size_t len;
+    };
+
     struct CtrlPacket {
         uint8_t head[8];
         union ctrlMsg {
             StartCtrl start;
+            DataCtrl data;
         } msg;
         
     };

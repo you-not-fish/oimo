@@ -21,6 +21,7 @@ namespace Net {
         bool hasCmd();
         ssize_t readPipe(char* buf, size_t len);
         int handleStart(struct StartCtrl* ctrl);
+        int handleData(struct DataCtrl* ctrl);
         int m_sendFd;
     };
 } // Net

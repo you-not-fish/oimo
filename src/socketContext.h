@@ -6,7 +6,6 @@
 #include "socket.h"
 #include "packle.h"
 #include "socketState.h"
-#include "spinLock.h"
 
 namespace Oimo {
 namespace Net {
@@ -31,9 +30,9 @@ namespace Net {
         Socket& sock() { return m_sock; }
         void setServ(uint32_t serv) { m_serv = serv; }
         uint32_t serv() const { return m_serv; }
-        size_t write(const char *buf, size_t len, bool needCopy);
+        size_t appendWB(char *buf, size_t len);
     private:
-        bool writeWB();
+        int writeWB();
         void newConnection();
         void handleRead();
         void handleWrite();
@@ -42,8 +41,6 @@ namespace Net {
         int m_readSize;
         SocketType m_sockType;
         std::list<WriteBuffer> m_wbList;
-        std::list<WriteBuffer> m_wbList0;
-        Oimo::SpinLock m_lock;
     };
 }   // Net
 }   // Oimo

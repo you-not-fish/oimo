@@ -26,6 +26,10 @@ namespace Net {
             std::bind(&TcpServer::handleNewConn, this, std::placeholders::_1));
         m_serv->registerFunc((Packle::MsgID)SystemMsgID::DATA,
             std::bind(&TcpServer::handleRead, this, std::placeholders::_1));
+        m_serv->registerFunc((Packle::MsgID)SystemMsgID::CLOSEREAD,
+            std::bind(&TcpServer::handleHalfClose, this, std::placeholders::_1));
+        m_serv->registerFunc((Packle::MsgID)SystemMsgID::ERROR,
+            std::bind(&TcpServer::handleError, this, std::placeholders::_1));
     }
 
     int TcpServer::createFd(const std::string& ip, uint16_t port) {
@@ -40,17 +44,17 @@ namespace Net {
             return -1;
         }
         
-        auto ctx = Singleton<SocketServer>::instance()
+        auto ctx = GSocketServer::instance()
             .getSocketContext(m_listenFd);
         assert(!ctx->isValid());
         ctx->reset(m_listenFd, m_serv->id());
         auto& sock = ctx->sock();
         if (!sock.bind(addr)) {
-            ctx->close();
+            ctx->reset(-1, 0);
             return -1;
         }
         if (!sock.listen()) {
-            ctx->close();
+            ctx->reset(-1, 0);
             return -1;
         }
         ctx->setSockType(SocketType::PLISTEN);
@@ -85,9 +89,9 @@ namespace Net {
         int fd = newConn.fd();
         uint32_t ip = newConn.ip();
         uint16_t port = newConn.port();
-        Connection::sPtr conn = std::make_shared<Connection>(fd, ip, port);
+        Connection::sPtr conn = std::make_shared<Connection>(fd, ip, port, this);
         assert(m_conns.find(fd) == m_conns.end());
-        m_conns[fd] = conn;
+        addConn(fd, conn);
         auto ctx = Singleton<SocketServer>::instance().getSocketContext(fd);
         assert(!ctx->isValid());
         ctx->reset(fd, m_serv->id());
@@ -102,13 +106,54 @@ namespace Net {
         size_t len = packle->size();
         auto it = m_conns.find(fd);
         if (it == m_conns.end()) {
-            LOG_ERROR << "TcpServer::handleRead: unknown fd";
+            LOG_WARN << "TcpServer::handleRead: unknown fd";
             return;
         }
-        LOG_DEBUG << "TcpServer::handleRead: " << len << " bytes";
         LOG_DEBUG << "TcpServer::handleRead: " << std::string(buf, len);
         auto conn = it->second;
         conn->append(buf, len);
+    }
+
+    void TcpServer::addConn(int fd, Connection::sPtr conn) {
+        auto it = m_conns.find(fd);
+        if (it != m_conns.end()) {
+            LOG_WARN << "TcpServer::addConn: fd " << fd << " already exists";
+            it->second = conn;
+            return;
+        }
+        m_conns[fd] = conn;
+    }
+
+    void TcpServer::removeConn(int fd) {
+        auto it = m_conns.find(fd);
+        if (it == m_conns.end()) {
+            LOG_WARN << "TcpServer::removeConn: unknown fd : " << fd;
+            return;
+        }
+        LOG_DEBUG << "removeConn: " << fd;
+        m_conns.erase(it);
+    }
+
+    void TcpServer::handleError(Packle::sPtr packle) {
+        int fd = packle->sessionID();
+        auto it = m_conns.find(fd);
+        if (it == m_conns.end()) {
+            LOG_WARN << "TcpServer::handleError: unknown fd";
+            return;
+        }
+        auto conn = it->second;
+        conn->close();
+    }
+
+    void TcpServer::handleHalfClose(Packle::sPtr packle) {
+        int fd = packle->sessionID();
+        auto it = m_conns.find(fd);
+        if (it == m_conns.end()) {
+            LOG_WARN << "TcpServer::handleHalfClose: unknown fd";
+            return;
+        }
+        auto conn = it->second;
+        conn->setCloseFlag();
     }
 } // Net
 }  // Oimo

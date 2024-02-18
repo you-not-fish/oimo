@@ -14,7 +14,9 @@ namespace Net {
             m_poller.poll(m_activeFds);
             for (auto ctx : m_activeFds) {
                 assert(ctx);
-                ctx->handleEvent();
+                if (ctx->isValid()) {
+                    ctx->handleEvent();
+                }
             }
         }
     }

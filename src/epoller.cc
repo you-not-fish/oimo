@@ -54,7 +54,9 @@ namespace Net {
         event.data.ptr = ctx;
         int ret = ::epoll_ctl(m_epfd, operation, ctx->fd(), &event);
         if (ret < 0) {
-            LOG_ERROR << "epoll_ctl failed";
+            LOG_ERROR << "epoll_ctl failed : " << strerror(errno)
+            << " fd = " << ctx->fd() << " events = " << ctx->events()
+            << " operation = " << epollopToStr(operation);
         }
     }
 }   //namespace Net

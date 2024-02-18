@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+package NetProto;
+
+message CloseRead {
+    int32 fd = 1;
+}

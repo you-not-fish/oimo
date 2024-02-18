@@ -4,6 +4,7 @@
 #include "serviceContext.h"
 #include "ctrlMsg.h"
 #include "socketServer.h"
+#include "tcpServer.h"
 #include "singleton.h"
 
 namespace Oimo {
@@ -27,10 +28,36 @@ namespace Net {
     }
 
     void Connection::close() {
-        // TODO
+        auto ctx = GSocketServer::instance().getSocketContext(m_fd);
+        if (ctx->isClosing()) {
+            return;
+        }
+        setCloseFlag();
+        ctx->setCloseFlag();
+        struct CtrlPacket ctrl;
+        uint8_t len = sizeof(struct CloseCtrl);
+        ctrl.head[6] = (uint8_t)'C';
+        ctrl.head[7] = len;
+        auto sid = Oimo::Coroutine::generateSid();
+        auto cor = Oimo::Coroutine::currentCoroutine();
+        cor->setSid(sid);
+        ctrl.msg.close.fd = m_fd;
+        ctrl.msg.close.session = Oimo::Coroutine::generateSid();
+        auto self = Oimo::ServiceContext::currentContext();
+        m_serv->removeConn(m_fd);
+        GSocketServer::instance().sendCtrl(
+            reinterpret_cast<char*>(ctrl.head+6), len+2
+        );
+        self->suspend(cor);
+        Oimo::Coroutine::yieldToSuspend();
+        m_fd = -1;
     }
 
     void Connection::sendToSocket(const char *buf, size_t len, bool needCopy) {
+        auto ctx = GSocketServer::instance().getSocketContext(m_fd);
+        if (ctx->isClosing()) {
+            return;
+        }
         char *data = nullptr;
         if (needCopy) {
             data = new char[len];
@@ -65,6 +92,9 @@ namespace Net {
 
     size_t Connection::recv(char* data, size_t len) {
         while (m_buffer.used() == 0) {
+            if (m_closing) {
+                return 0;
+            }
             auto cor = Oimo::Coroutine::currentCoroutine();
             m_cors.push_back(cor);
             Oimo::Coroutine::yieldToSuspend();

@@ -19,27 +19,33 @@ namespace Net {
     public:
         SocketContext(int fd = -1, uint32_t serv = 0);
         ~SocketContext();
-        bool isValid() const {
+        bool isValid() const override {
             return m_sock.isValid() && m_serv != 0;
         }
         void handleEvent() override;
         void reset(int fd, uint32_t serv);
-        void close() { m_sock.close(); m_fd = -1; }
+        bool close(uint16_t session);
         SocketType sockType() const { return m_sockType; }
         void setSockType(SocketType type) { m_sockType = type; }
         Socket& sock() { return m_sock; }
         void setServ(uint32_t serv) { m_serv = serv; }
         uint32_t serv() const { return m_serv; }
+        bool isClosing() const { return m_closing; }
+        void setCloseFlag() { m_closing = true; }
         size_t appendWB(char *buf, size_t len);
     private:
         int writeWB();
-        void newConnection();
-        void handleRead();
-        void handleWrite();
+        int newConnection();
+        int handleRead();
+        int handleWrite();
+        bool shutRead();
+        bool shutWrite();
         Socket m_sock;
         uint32_t m_serv;
         int m_readSize;
         SocketType m_sockType;
+        bool m_closing;
+        uint16_t m_closeSession;
         std::list<WriteBuffer> m_wbList;
     };
 }   // Net

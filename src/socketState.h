@@ -15,7 +15,8 @@ namespace Net {
         ACCEPT,
         DELETE,
         HALFCLOSE_READ,
-        HALFCLOSE_WRITE
+        HALFCLOSE_WRITE,
+        CLOSE
     };
 
     inline const char* SocketType2String(SocketType type) {
@@ -32,6 +33,10 @@ namespace Net {
                 return "ACCEPT";
             case SocketType::DELETE:
                 return "DELETE";
+            case SocketType::HALFCLOSE_READ:
+                return "HALFCLOSE_READ";
+            case SocketType::HALFCLOSE_WRITE:
+                return "HALFCLOSE_WRITE";
             default:
                 return "UNKNOWN";
         }

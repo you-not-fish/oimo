@@ -7,6 +7,20 @@ namespace Oimo {
 namespace Net {
     #define MIN_EVENTS 64
     #define MAX_EVENTS 256
+
+    inline const char* epollopToStr(int op) {
+        switch (op) {
+            case EPOLL_CTL_ADD:
+                return "EPOLL_CTL_ADD";
+            case EPOLL_CTL_MOD:
+                return "EPOLL_CTL_MOD";
+            case EPOLL_CTL_DEL:
+                return "EPOLL_CTL_DEL";
+            default:
+                return "UNKNOWN";
+        }
+    }
+
     class FdContext;
     class EPoller {
     public:

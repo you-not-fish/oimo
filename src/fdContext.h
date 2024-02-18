@@ -8,6 +8,8 @@ namespace Net {
         FdContext(int fd = -1);
         virtual ~FdContext();
         virtual void handleEvent() = 0;
+        virtual bool isValid() const { return m_fd != -1; }
+        virtual void reset();
         int fd() const { return m_fd; }
         void setType(EventType type) { m_type = type; }
         EventType type() const { return m_type; }

@@ -19,6 +19,13 @@ namespace Net {
 
     FdContext::~FdContext() {}
 
+    void FdContext::reset() {
+        m_fd = -1;
+        m_type = EventType::NEW;
+        m_events = kNoneEvent;
+        m_revents = 0;
+    }
+
     void FdContext::update() {
         auto loop = GSocketServer::instance().eventLoop();
         loop->updateEvent(this);

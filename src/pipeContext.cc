@@ -35,6 +35,9 @@ namespace Net {
                 case 'D':
                     handleData(reinterpret_cast<struct DataCtrl*>(buf));
                     break;
+                case 'C':
+                    handleClose(reinterpret_cast<struct CloseCtrl*>(buf));
+                    break;
                 default:
                     LOG_ERROR << "PipeContext::handleEvent: unknown type";
             }
@@ -100,8 +103,16 @@ namespace Net {
         int fd = ctrl->fd;
         auto ctx = GSocketServer::instance().getSocketContext(fd);
         assert(ctx->isValid());
-        assert(ctx->sockType() == SocketType::ACCEPT);
         ctx->appendWB(ctrl->buf, ctrl->len);
+        return 0;
+    }
+
+    int PipeContext::handleClose(struct CloseCtrl* ctrl) {
+        int fd = ctrl->fd;
+        uint16_t session = ctrl->session;
+        auto ctx = GSocketServer::instance().getSocketContext(fd);
+        assert(ctx->isValid());
+        ctx->close(session);
         return 0;
     }
 } // Net

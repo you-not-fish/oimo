@@ -22,6 +22,7 @@ namespace Net {
         ssize_t readPipe(char* buf, size_t len);
         int handleStart(struct StartCtrl* ctrl);
         int handleData(struct DataCtrl* ctrl);
+        int handleClose(struct CloseCtrl* ctrl);
         int m_sendFd;
     };
 } // Net

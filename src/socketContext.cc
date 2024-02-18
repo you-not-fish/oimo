@@ -18,51 +18,63 @@ namespace Net {
         , m_sock(fd)
         , m_serv(serv)
         , m_readSize(1024)
-        , m_sockType(SocketType::NEW) {}
+        , m_sockType(SocketType::NEW)
+        , m_closing(false)
+        , m_closeSession(0) {}
 
     SocketContext::~SocketContext() {}
     void SocketContext::handleEvent() {
-        if (m_revents & EPOLLHUP) {
-            LOG_ERROR << "socket error";
-            return;
+        int err = 0;
+        do {
+            if (m_revents & EPOLLHUP) {
+                LOG_ERROR << "peer has closed the connection";
+                err = -1;
+                break;
+            }
+            switch (m_sockType) {
+                case SocketType::LISTEN:
+                    assert(m_revents & EPOLLIN);
+                    err = newConnection();
+                    break;
+                default:
+                    if (m_revents & EPOLLIN) {
+                        err = handleRead();
+                    }
+                    if (m_revents & EPOLLOUT) {
+                        err += handleWrite();
+                    }
+                    break;
+            }
+        } while (0);
+        if (err < 0) {
+            Oimo::Packle::sPtr Packle = std::make_shared<Oimo::Packle>(
+                (Oimo::Packle::MsgID)SystemMsgID::ERROR);
+            Packle->setSessionID(m_fd);
+            sendProto(Packle, m_serv);
         }
-        switch (m_sockType) {
-            case SocketType::LISTEN:
-                assert(m_revents & EPOLLIN);
-                newConnection();
-                break;
-            case SocketType::ACCEPT:
-                if (m_revents & EPOLLIN) {
-                    handleRead();
-                }
-                if (m_revents & EPOLLOUT) {
-                    handleWrite();
-                }
-                break;
-            default:
-                break;
-        }
+
     }
 
     void SocketContext::reset(int fd, uint32_t serv) {
-        if (isValid()) {
-            m_sock.close();
-            m_fd = -1;
-            assert(!isValid());
-        }
+        assert(fd == -1 || !isValid());
+        m_sock.close();
+        FdContext::reset();
         m_fd = fd;
         m_sock.setFd(fd);
         m_serv = serv;
         m_sockType = SocketType::NEW;
         m_wbList.clear();
+        m_readSize = 1024;
+        m_closing = false;
+        m_closeSession = 0;
     }
 
-    void SocketContext::newConnection() {
+    int SocketContext::newConnection() {
         Address addr;
         int connFd = m_sock.accept(&addr);
         if (connFd < 0) {
             LOG_ERROR << "accept error: " << ::strerror(errno);
-            return;
+            return 0;
         }
         LOG_DEBUG << "new connection from " << addr.ipAsString()
             << ":" << addr.portAsString();
@@ -74,9 +86,10 @@ namespace Net {
             (Packle::MsgID)SystemMsgID::NEWCONN);
         packle->serialize(newConn);
         sendProto(packle, m_serv);
+        return 0;
     }
 
-    void SocketContext::handleRead() {
+    int SocketContext::handleRead() {
         char *buf = new char[m_readSize];
         ssize_t n;
         for (;;) {
@@ -86,16 +99,32 @@ namespace Net {
                     continue;
                 }
                 LOG_ERROR << "read error: " << ::strerror(errno);
-                return;
+                return -1;
             }
             break;
         }
         
         if (n == 0) {
-            LOG_DEBUG << "peer closed";
-            m_sock.shutdownRead();
+            if (m_sockType == SocketType::HALFCLOSE_READ ||
+                m_sockType == SocketType::CLOSE) {
+                LOG_DEBUG << "read endpoint has been closed";
+                return 0;
+            }
+            LOG_DEBUG << "peer has closed the connection";
+            shutRead();
             disableRead();
-            return;
+            if (!m_closing) {
+                Oimo::Packle::sPtr packle = std::make_shared<Oimo::Packle>(
+                    (Oimo::Packle::MsgID)SystemMsgID::CLOSEREAD);
+                packle->setSessionID(m_fd);
+                sendProto(packle, m_serv);
+            }
+            return 0;
+        }
+        if (m_sockType == SocketType::HALFCLOSE_READ ||
+            m_sockType == SocketType::CLOSE) {
+            delete[] buf;
+            return 0;
         }
         LOG_DEBUG << "read " << n << " bytes";
         if (n == m_readSize) {
@@ -109,6 +138,7 @@ namespace Net {
         packle->setBuf(buf);
         packle->setSize(n);
         sendProto(packle, m_serv);
+        return 0;
     }
 
     int SocketContext::writeWB() {
@@ -134,13 +164,37 @@ namespace Net {
         return 0;
     }
 
-    void SocketContext::handleWrite() {
+    int SocketContext::handleWrite() {
         int ret = writeWB();
-        if (ret == 0) {
-            disableWrite();
-        } else if (ret < 0) {
-            // TODO
+        if (m_closeSession) {
+            LOG_DEBUG << "all data sent, closing...";
+            assert(m_closing);
+            disableAll();
+            int fd = m_fd;
+            uint32_t serv = m_serv;
+            m_fd = -1;
+            m_serv = 0;
+            m_sock.close();
+            assert(!isValid());
+            Oimo::Packle::sPtr packle = std::make_shared<Oimo::Packle>(
+                (Oimo::Packle::MsgID)SystemMsgID::CLOSED);
+            packle->setSessionID(m_closeSession);
+            packle->setSource(fd);
+            packle->setIsRet(true);
+            sendProto(packle, serv);
+            return 0;
         }
+        if (ret == 0) {
+            if (m_wbList.empty()) {
+                disableWrite();
+            }
+        } else if (ret == -1) {
+            LOG_DEBUG << "write error, closing...";
+            shutWrite();
+            disableWrite();
+            return -1;
+        }
+        return 0;
     }
 
     size_t SocketContext::appendWB(char *buf, size_t len) {
@@ -149,6 +203,54 @@ namespace Net {
             enableWrite();
         }
         return len;
+    }
+
+    bool SocketContext::shutRead() {
+        if (m_sockType == SocketType::HALFCLOSE_READ ||
+            m_sockType == SocketType::CLOSE) {
+            return true;
+        }
+        m_sockType = m_sockType == SocketType::HALFCLOSE_WRITE ?
+            SocketType::CLOSE : SocketType::HALFCLOSE_READ;
+        return m_sock.shutdownRead();
+    }
+
+    bool SocketContext::shutWrite() {
+        if (m_sockType == SocketType::HALFCLOSE_WRITE ||
+            m_sockType == SocketType::CLOSE) {
+            return true;
+        }
+        m_sockType = m_sockType == SocketType::HALFCLOSE_READ ?
+            SocketType::CLOSE : SocketType::HALFCLOSE_WRITE;
+        return m_sock.shutdownWrite();
+    }
+
+    bool SocketContext::close(uint16_t session) {
+        shutRead();
+        disableRead();
+        if (m_wbList.empty()) {
+            LOG_DEBUG << "no data to send, closing...";
+            disableAll();
+            int fd = m_fd;
+            uint32_t serv = m_serv;
+            m_fd = -1;
+            m_serv = 0;
+            m_sock.close();
+            assert(!isValid());
+            Oimo::Packle::sPtr packle = std::make_shared<Oimo::Packle>(
+                (Oimo::Packle::MsgID)SystemMsgID::CLOSED);
+            packle->setSessionID(session);
+            packle->setSource(fd);
+            packle->setIsRet(true);
+            sendProto(packle, serv);
+        } else {
+            LOG_DEBUG << "data to send, closing after all data sent...";
+            m_closeSession = session;
+            if (!isWriting()) {
+                enableWrite();
+            }
+        }
+        return true;
     }
 
 }  // Net

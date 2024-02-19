@@ -53,10 +53,10 @@ namespace Net {
         m_fd = -1;
     }
 
-    void Connection::sendToSocket(const char *buf, size_t len, bool needCopy) {
+    int Connection::sendToSocket(const char *buf, size_t len, bool needCopy) {
         auto ctx = GSocketServer::instance().getSocketContext(m_fd);
         if (ctx->isClosing()) {
-            return;
+            return -1;
         }
         char *data = nullptr;
         if (needCopy) {
@@ -76,18 +76,17 @@ namespace Net {
         GSocketServer::instance().sendCtrl(
             reinterpret_cast<char*>(ctrl.head+6), size+2
         );
+        return len;
     }
 
     size_t Connection::send(const char* data, size_t len) {
-        sendToSocket(data, len, true);
-        return len;
+        return sendToSocket(data, len, true);
     }
 
     size_t Connection::send(Oimo::Packle::sPtr packle) {
         auto size = packle->size();
         auto buf = packle->getAndResetBuf();
-        sendToSocket(buf, size, false);
-        return size;
+        return sendToSocket(buf, size, false);
     }
 
     size_t Connection::recv(char* data, size_t len) {

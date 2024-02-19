@@ -39,7 +39,9 @@ namespace Net {
         int handleRead();
         int handleWrite();
         bool shutRead();
+        void freeWB();
         bool shutWrite();
+        void sendClosedPackle(uint16_t session);
         Socket m_sock;
         uint32_t m_serv;
         int m_readSize;

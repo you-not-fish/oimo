@@ -35,7 +35,7 @@ namespace Net {
             m_closing = true;
         }
     private:
-        void sendToSocket(const char *buf, size_t len, bool needCopy);
+        int sendToSocket(const char *buf, size_t len, bool needCopy);
         int m_fd;
         bool m_closing;
         Address m_addr;

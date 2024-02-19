@@ -1,6 +1,7 @@
 #pragma once
 
 #include <sys/epoll.h>
+#include <string>
 #include <vector>
 
 namespace Oimo {
@@ -19,6 +20,26 @@ namespace Net {
             default:
                 return "UNKNOWN";
         }
+    }
+
+    inline std::string eventsToStr(int events) {
+        std::string str;
+        if (events & EPOLLIN) {
+            str += "EPOLLIN ";
+        }
+        if (events & EPOLLOUT) {
+            str += "EPOLLOUT ";
+        }
+        if (events & EPOLLRDHUP) {
+            str += "EPOLLRDHUP ";
+        }
+        if (events & EPOLLHUP) {
+            str += "EPOLLHUP ";
+        }
+        if (events & EPOLLERR) {
+            str += "EPOLLERR ";
+        }
+        return str;
     }
 
     class FdContext;

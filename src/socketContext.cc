@@ -4,6 +4,7 @@
 #include "sysMsg.h"
 #include "socketState.h"
 #include "address.h"
+#include"epoller.h"
 #include "serviceContextMgr.h"
 #include "protobuf/newConn.pb.h"
 #include "log.h"
@@ -27,7 +28,12 @@ namespace Net {
         int err = 0;
         do {
             if (m_revents & EPOLLHUP) {
-                LOG_ERROR << "peer has closed the connection";
+                LOG_DEBUG << "epoll hup event on fd " << m_fd
+                        << ", socktype: " << SocketType2String(m_sockType)
+                        << ", revents: " << eventsToStr(m_revents)
+                        << ", events: " << eventsToStr(m_events);
+                disableAll();
+                m_sockType = SocketType::CLOSE;
                 err = -1;
                 break;
             }
@@ -170,18 +176,9 @@ namespace Net {
             LOG_DEBUG << "all data sent, closing...";
             assert(m_closing);
             disableAll();
-            int fd = m_fd;
-            uint32_t serv = m_serv;
-            m_fd = -1;
-            m_serv = 0;
-            m_sock.close();
-            assert(!isValid());
-            Oimo::Packle::sPtr packle = std::make_shared<Oimo::Packle>(
-                (Oimo::Packle::MsgID)SystemMsgID::CLOSED);
-            packle->setSessionID(m_closeSession);
-            packle->setSource(fd);
-            packle->setIsRet(true);
-            sendProto(packle, serv);
+            m_sockType = SocketType::CLOSE;
+            freeWB();
+            sendClosedPackle(m_closeSession);
             return 0;
         }
         if (ret == 0) {
@@ -225,24 +222,27 @@ namespace Net {
         return m_sock.shutdownWrite();
     }
 
+    void SocketContext::freeWB() {
+        for (auto &wb : m_wbList) {
+            delete[] wb.buf;
+        }
+        m_wbList.clear();
+    }
+
     bool SocketContext::close(uint16_t session) {
+        if (m_sockType == SocketType::CLOSE) {
+            freeWB();
+            sendClosedPackle(session);
+            return false;
+        }
         shutRead();
         disableRead();
         if (m_wbList.empty()) {
             LOG_DEBUG << "no data to send, closing...";
             disableAll();
-            int fd = m_fd;
-            uint32_t serv = m_serv;
-            m_fd = -1;
-            m_serv = 0;
-            m_sock.close();
-            assert(!isValid());
-            Oimo::Packle::sPtr packle = std::make_shared<Oimo::Packle>(
-                (Oimo::Packle::MsgID)SystemMsgID::CLOSED);
-            packle->setSessionID(session);
-            packle->setSource(fd);
-            packle->setIsRet(true);
-            sendProto(packle, serv);
+            m_sockType = SocketType::CLOSE;
+            freeWB();
+            sendClosedPackle(session);
         } else {
             LOG_DEBUG << "data to send, closing after all data sent...";
             m_closeSession = session;
@@ -251,6 +251,21 @@ namespace Net {
             }
         }
         return true;
+    }
+
+    void SocketContext::sendClosedPackle(uint16_t session) {
+        int fd = m_fd;
+        uint32_t serv = m_serv;
+        m_fd = -1;
+        m_serv = 0;
+        m_sock.close();
+        assert(!isValid());
+        Oimo::Packle::sPtr packle = std::make_shared<Oimo::Packle>(
+            (Oimo::Packle::MsgID)SystemMsgID::CLOSED);
+        packle->setSessionID(session);
+        packle->setSource(fd);
+        packle->setIsRet(true);
+        sendProto(packle, serv);
     }
 
 }  // Net

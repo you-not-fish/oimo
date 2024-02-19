@@ -109,7 +109,7 @@ namespace Net {
             LOG_WARN << "TcpServer::handleRead: unknown fd";
             return;
         }
-        LOG_DEBUG << "TcpServer::handleRead: " << std::string(buf, len);
+        LOG_DEBUG << "TcpServer::handleRead: recv : " << std::string(buf, len);
         auto conn = it->second;
         conn->append(buf, len);
     }

@@ -5,6 +5,7 @@
 #include <mutex>
 #include <map>
 #include <yaml-cpp/yaml.h>
+#include "singleton.h"
 
 namespace Oimo {
     class Config {
@@ -48,4 +49,5 @@ namespace Oimo {
         Map m_map;
         mutable std::mutex m_mutex;
     };
+    using GConfig = Singleton<Config>;
 }

@@ -70,11 +70,13 @@ namespace Oimo {
                 it++;
                 continue;
             }
-            execute(timer->serv, timer->session);
-            if (timer->isRepeat()) {
-                // LOG_DEBUG << "now : " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
-                timer->delay = timer->interval;
-                add(timer);
+            if (!timer.unique()) {
+                execute(timer->serv, timer->session);
+                if (timer->isRepeat()) {
+                    // LOG_DEBUG << "now : " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+                    timer->delay = timer->interval;
+                    add(timer);
+                }    
             }
             it = list.erase(it);
         }

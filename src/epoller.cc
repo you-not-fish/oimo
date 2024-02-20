@@ -18,7 +18,7 @@ namespace Net {
     }
 
     void EPoller::poll(std::vector<FdContext*>& activeFds) {
-        int numEvents = ::epoll_wait(m_epfd, m_events.data(), m_events.size(), -1);
+        int numEvents = ::epoll_wait(m_epfd, m_events.data(), m_events.size(), 1000);
         if (numEvents < 0) {
             LOG_ERROR << "epoll_wait failed : " << strerror(errno);
         }

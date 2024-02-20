@@ -236,7 +236,7 @@ namespace Oimo {
         }
     }
 
-    void ServiceContext::addTimer(uint32_t delay, uint32_t interval,
+    uint64_t ServiceContext::addTimer(uint32_t delay, uint32_t interval,
         Coroutine::CoroutineFunc func) {
         Timer::sPtr timer = std::make_shared<Timer>();
         timer->delay = delay;
@@ -260,6 +260,16 @@ namespace Oimo {
         GTimerWheel::instance().addTimer(timer);
         if (!func) {
             Coroutine::yieldToSuspend();
+        }
+        return id;
+    }
+
+    void ServiceContext::removeTimer(uint64_t id) {
+        auto it = m_timers.find(id);
+        if (it != m_timers.end()) {
+            auto ctx = it->second;
+            returnCoroutine(ctx->cor);
+            m_timers.erase(it);
         }
     }
 }

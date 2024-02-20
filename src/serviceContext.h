@@ -61,8 +61,9 @@ namespace Oimo {
         void setMessageQueue(PackleQueue::sPtr messageQueue) {
             m_messageQueue = messageQueue;
         }
-        void addTimer(uint32_t delay, uint32_t interval,
+        uint64_t addTimer(uint32_t delay, uint32_t interval,
             Coroutine::CoroutineFunc func = nullptr);
+        void removeTimer(uint64_t id);
         void addFork(Coroutine::sPtr coroutine);
         bool hasFork() const { return !m_forkingQueue.empty(); }
         bool hasSession(Coroutine::SessionID sessionID) const {

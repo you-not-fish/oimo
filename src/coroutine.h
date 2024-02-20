@@ -25,6 +25,7 @@ namespace Oimo {
             SUSPENDED,
             STOPPED
         };
+        void setState(CoroutineState state) { m_state = state; }
         CoroutineState state() const { return m_state; }
         void resume();
         void reset(CoroutineFunc func, uint32_t stackSize = 0);

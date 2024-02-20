@@ -4,6 +4,7 @@
 #include <queue>
 #include "packle.h"
 #include "spinLock.h"
+#include "singleton.h"
 
 namespace Oimo {
     class ServiceContext;
@@ -76,4 +77,6 @@ namespace Oimo {
         std::deque<PackleQueue::sPtr> m_queue;
         SpinLock m_lock;
     };
+
+    using GQueue = Singleton<GlobalQueue>;
 }

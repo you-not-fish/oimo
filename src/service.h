@@ -16,6 +16,14 @@ namespace Oimo {
             m_context->registerHandler(messageID, handler);
         }
 
+        void addTimer(uint32_t delay, uint32_t interval, Coroutine::CoroutineFunc func) {
+            m_context->addTimer(delay, interval, func);
+        }
+
+        void sleep(uint32_t delay) {
+            m_context->addTimer(delay, 0, nullptr);
+        }
+
         template<typename T>
         void call(T dest, Packle::sPtr packle) {
             m_context->call(dest, packle);

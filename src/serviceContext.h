@@ -10,7 +10,15 @@
 #include "coroutine.h"
 
 namespace Oimo {
-    
+    struct TimerContext {
+        using sPtr = std::shared_ptr<TimerContext>;
+        Coroutine::sPtr cor;
+        std::function<void()> callback;
+        uint64_t id;
+        uint32_t pending;
+        bool loop;
+    };
+
     class ServiceContext {
     public:
         using sPtr = std::shared_ptr<ServiceContext>;
@@ -43,6 +51,7 @@ namespace Oimo {
         static void send(std::string dest, Packle::sPtr packle);
         static void send(ServiceContext::sPtr dest, Packle::sPtr packle);
         void ret(ServiceID dest);
+        Coroutine::SessionID getSession();
         Coroutine::sPtr getSuspendCoroutine(Coroutine::SessionID sessionID);
         static ServiceContext::sPtr currentContext() { return t_currentContext; }
         static void setCurrentContext(ServiceContext::sPtr context) {
@@ -52,9 +61,15 @@ namespace Oimo {
         void setMessageQueue(PackleQueue::sPtr messageQueue) {
             m_messageQueue = messageQueue;
         }
+        void addTimer(uint32_t delay, uint32_t interval,
+            Coroutine::CoroutineFunc func = nullptr);
         void addFork(Coroutine::sPtr coroutine);
         bool hasFork() const { return !m_forkingQueue.empty(); }
-    protected:
+        bool hasSession(Coroutine::SessionID sessionID) const {
+            return m_suspendingPool.find(sessionID) != m_suspendingPool.end();
+        }
+    private:
+        void timerCallback(TimerContext::sPtr timer);
         static thread_local ServiceContext::sPtr t_currentContext;
         std::string m_name;
         ServiceID m_serviceID;
@@ -65,5 +80,6 @@ namespace Oimo {
         CoroutineQueue m_forkingQueue;
         static thread_local CoroutineQueue t_freeQueue;
         std::map<Packle::MsgID, HandlerFunc> m_handlers;
+        std::map<uint64_t, TimerContext::sPtr> m_timers;
     };
 } // namespace Oimo

@@ -1,6 +1,10 @@
 #include <thread>
 #include "timeWheel.h"
+#include "sysMsg.h"
+#include "packle.h"
+#include "serviceContextMgr.h"
 #include "config.h"
+#include "log.h"
 
 namespace Oimo {
     TimeWheel::TimeWheel() : m_cur(0), m_running(false) {
@@ -33,19 +37,20 @@ namespace Oimo {
 
     void TimeWheel::hold() {
         m_last += std::chrono::milliseconds(m_interval);
+        // LOG_DEBUG << "m_last: " << std::chrono::duration_cast<std::chrono::milliseconds>(m_last.time_since_epoch()).count();
+        // LOG_DEBUG << "now: " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
         std::this_thread::sleep_until(m_last);
     }
 
     void TimeWheel::add(Timer::sPtr timer) {
-        if (timer->delay < m_wheelSize * m_interval) {
-            int index = (m_cur + timer->delay / m_interval) % m_wheelSize;
-            m_wheel[index].push_back(timer);
-            timer->level = 0;
-        } else {
-            int index = (m_cur + m_wheelSize - 1) % m_wheelSize;
-            m_wheel[index].push_back(timer);
-            timer->level = timer->delay / (m_wheelSize * m_interval);
-        }
+        uint32_t ticks = timer->delay ? (timer->delay - 1) / m_interval + 1 : 1;
+        uint32_t level = (ticks - 1) / m_wheelSize;
+        int slot = (m_cur + ticks) % m_wheelSize;
+        timer->level = level;
+        m_wheel[slot].push_back(timer);
+        LOG_DEBUG << "add timer, delay: " << timer->delay << ", interval: " << timer->interval
+            << ", ticks: " << ticks << ", level: " << level
+            << ", cur_index: " << m_cur << ", slot: " << slot;
     }
 
     void TimeWheel::tick() {
@@ -65,12 +70,20 @@ namespace Oimo {
                 it++;
                 continue;
             }
+            execute(timer->serv, timer->session);
             if (timer->isRepeat()) {
+                // LOG_DEBUG << "now : " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
                 timer->delay = timer->interval;
                 add(timer);
             }
             it = list.erase(it);
         }
     }
-        
+    
+    void TimeWheel::execute(uint32_t serv, uint16_t session) {
+        Packle::sPtr packle = std::make_shared<Packle>((Packle::MsgID)SystemMsgID::TIMER);
+        packle->setSessionID(session);
+        auto ctx = ServiceContextMgr::getContext(serv);
+        ctx->messageQueue()->push(packle);
+    }
 }

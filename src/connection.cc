@@ -16,7 +16,7 @@ namespace Net {
         ctrl.head[7] = len;
         ctrl.msg.start.fd = m_fd;
         auto self = Oimo::ServiceContext::currentContext();
-        Oimo::Coroutine::SessionID sid = Oimo::Coroutine::generateSid();
+        Oimo::Coroutine::SessionID sid = self->getSession();
         ctrl.msg.start.session = sid;
         auto cor = Oimo::Coroutine::currentCoroutine();
         cor->setSid(sid);
@@ -38,12 +38,12 @@ namespace Net {
         uint8_t len = sizeof(struct CloseCtrl);
         ctrl.head[6] = (uint8_t)'C';
         ctrl.head[7] = len;
-        auto sid = Oimo::Coroutine::generateSid();
+        auto self = Oimo::ServiceContext::currentContext();
+        auto sid = self->getSession();
         auto cor = Oimo::Coroutine::currentCoroutine();
         cor->setSid(sid);
         ctrl.msg.close.fd = m_fd;
-        ctrl.msg.close.session = Oimo::Coroutine::generateSid();
-        auto self = Oimo::ServiceContext::currentContext();
+        ctrl.msg.close.session = sid;
         m_serv->removeConn(m_fd);
         GSocketServer::instance().sendCtrl(
             reinterpret_cast<char*>(ctrl.head+6), len+2

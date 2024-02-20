@@ -67,14 +67,14 @@ namespace Net {
             return;
         }
         m_cb = cb;
+        auto self = Oimo::ServiceContext::currentContext();
         struct CtrlPacket ctrl;
         uint8_t len = sizeof(struct StartCtrl);
         ctrl.head[6] = (uint8_t)'S';
         ctrl.head[7] = len;
         ctrl.msg.start.fd = m_listenFd;
-        Oimo::Coroutine::SessionID sid = Oimo::Coroutine::generateSid();
+        auto sid = self->getSession();
         ctrl.msg.start.session = sid;
-        auto self = Oimo::ServiceContext::currentContext();
         auto cor = Oimo::Coroutine::currentCoroutine();
         cor->setSid(sid);
         self->suspend(cor);

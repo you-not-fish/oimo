@@ -1,7 +1,8 @@
 #include <cassert>
-#include "serviceContext.h"
 #include "serviceContextMgr.h"
 #include "log.h"
+#include "sysMsg.h"
+#include "timeWheel.h"
 namespace Oimo {
     thread_local ServiceContext::sPtr ServiceContext::t_currentContext = nullptr;
     thread_local ServiceContext::CoroutineQueue ServiceContext::t_freeQueue;
@@ -44,7 +45,7 @@ namespace Oimo {
 
     void ServiceContext::suspend(Coroutine::sPtr coroutine) {
         assert(coroutine);
-        assert(coroutine->state() == Coroutine::CoroutineState::RUNNING);
+        // assert(coroutine->state() == Coroutine::CoroutineState::RUNNING);
         assert(m_suspendingPool.find(coroutine->sid()) == m_suspendingPool.end());
         m_suspendingPool[coroutine->sid()] = coroutine;
     }
@@ -58,6 +59,30 @@ namespace Oimo {
         }
     }
     void ServiceContext::dispatch(Packle::sPtr packle) {
+        if (packle->type() == (Packle::MsgID)SystemMsgID::TIMER) {
+            auto id = packle->sessionID();
+            if (id == 0) {
+                LOG_ERROR << "Invalid timer packle";
+                return;
+            }
+            auto it = m_timers.find(id);
+            if (it != m_timers.end()) {
+                auto ctx = it->second;
+                auto cor = ctx->cor;
+                if (cor->state() == Coroutine::CoroutineState::RUNNING) {
+                    ctx->pending++;
+                } else {
+                    cor->resume();
+                    if (!ctx->loop) {
+                        m_timers.erase(it);
+                    }
+                    if (cor->state() == Coroutine::CoroutineState::STOPPED) {
+                        returnCoroutine(cor);
+                    }
+                }
+            }
+            return;
+        }
         if (packle->isRet()) {
             if (packle->sessionID() != 0) {
                 Coroutine::sPtr coroutine = getSuspendCoroutine(packle->sessionID());
@@ -127,7 +152,7 @@ namespace Oimo {
         assert(!Coroutine::isMainCoroutine());
         auto coroutine = Coroutine::currentCoroutine();
         auto self = currentContext();
-        auto sessionID = Coroutine::generateSid();
+        auto sessionID = self->getSession();
         packle->setSource(currentContext()->serviceID());
         packle->setSessionID(sessionID);
         dest->messageQueue()->push(packle);
@@ -174,6 +199,14 @@ namespace Oimo {
         m_returnPackle.reset();
     }
 
+    Coroutine::SessionID ServiceContext::getSession() {
+        Coroutine::SessionID sid;
+        do {
+            sid = Coroutine::generateSid();
+        } while (hasSession(sid));
+        return sid;
+    }
+
     Coroutine::sPtr ServiceContext::getSuspendCoroutine(Coroutine::SessionID sessionID) {
         auto it = m_suspendingPool.find(sessionID);
         if (it != m_suspendingPool.end()) {
@@ -188,5 +221,45 @@ namespace Oimo {
     void ServiceContext::addFork(Coroutine::sPtr coroutine) {
         assert(coroutine->state() == Coroutine::CoroutineState::SUSPENDED);
         m_forkingQueue.push(coroutine);
+    }
+
+    void ServiceContext::timerCallback(TimerContext::sPtr timer) {
+        assert(timer->cor == Coroutine::currentCoroutine());
+        while (true) {
+            timer->callback();
+            if (!timer->loop) break;
+            if (timer->pending > 0) {
+                timer->pending--;
+                continue;
+            }
+            Coroutine::yieldToSuspend();
+        }
+    }
+
+    void ServiceContext::addTimer(uint32_t delay, uint32_t interval,
+        Coroutine::CoroutineFunc func) {
+        Timer::sPtr timer = std::make_shared<Timer>();
+        timer->delay = delay;
+        timer->interval = interval;
+        static uint64_t id = 0;
+        timer->serv = serviceID();
+        timer->session = ++id;
+        TimerContext::sPtr ctx = std::make_shared<TimerContext>();
+        ctx->callback = func;
+        ctx->id = id;
+        ctx->loop = interval > 0;
+        ctx->pending = 0;
+        m_timers[id] = ctx;
+        if (func) {
+            ctx->cor = getCoroutine(
+                std::bind(&ServiceContext::timerCallback, this, ctx)
+            );
+        } else {
+            ctx->cor = Coroutine::currentCoroutine();
+        }
+        GTimerWheel::instance().addTimer(timer);
+        if (!func) {
+            Coroutine::yieldToSuspend();
+        }
     }
 }

@@ -4,6 +4,7 @@
 #include "sysMsg.h"
 #include "log.h"
 #include "spinLock.h"
+#include "singleton.h"
 #include <map>
 
 namespace Oimo {
@@ -51,4 +52,6 @@ namespace Oimo {
         ServiceMap services;
         mutable SpinLock lock;
     };
+
+    using APP = Singleton<Application>;
 }

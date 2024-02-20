@@ -4,13 +4,7 @@
 
 namespace Oimo {
 namespace Net {
-    SocketThread::SocketThread()
-        : m_thread(
-            std::make_shared<Thread>(
-                std::bind(&SocketThread::run, this),
-                "SocketThread")
-            ) {
-    }
+    SocketThread::SocketThread() {}
 
     SocketThread::~SocketThread() {
         stop();
@@ -18,6 +12,7 @@ namespace Net {
     }
 
     void SocketThread::start() {
+        m_thread.reset(new Thread(std::bind(&SocketThread::run, this), "socketthread"));
         m_thread->start();
     }
 
@@ -26,12 +21,12 @@ namespace Net {
     }
 
     void SocketThread::stop() {
-        auto& server = Singleton<SocketServer>::instance();
+        auto& server = GSocketServer::instance();
         server.eventLoop()->stop();
     }
 
     void SocketThread::run() {
-        auto& server = Singleton<SocketServer>::instance();
+        auto& server = GSocketServer::instance();
         server.eventLoop()->loop();
     }
 } // Net

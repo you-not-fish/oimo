@@ -101,7 +101,7 @@ namespace Net {
     }
 
     void TcpServer::handleRead(Packle::sPtr packle) {
-        int fd = packle->sessionID();
+        int fd = packle->fd();
         char *buf = packle->buf();
         size_t len = packle->size();
         auto it = m_conns.find(fd);
@@ -109,7 +109,7 @@ namespace Net {
             LOG_WARN << "TcpServer::handleRead: unknown fd";
             return;
         }
-        LOG_DEBUG << "TcpServer::handleRead: recv : " << std::string(buf, len);
+        LOG_TRACE << "TcpServer::handleRead: recv : " << std::string(buf, len);
         auto conn = it->second;
         conn->append(buf, len);
     }
@@ -130,12 +130,12 @@ namespace Net {
             LOG_WARN << "TcpServer::removeConn: unknown fd : " << fd;
             return;
         }
-        LOG_DEBUG << "removeConn: " << fd;
+        LOG_TRACE << "removeConn: " << fd;
         m_conns.erase(it);
     }
 
     void TcpServer::handleError(Packle::sPtr packle) {
-        int fd = packle->sessionID();
+        int fd = packle->fd();
         auto it = m_conns.find(fd);
         if (it == m_conns.end()) {
             LOG_WARN << "TcpServer::handleError: unknown fd";
@@ -146,7 +146,7 @@ namespace Net {
     }
 
     void TcpServer::handleHalfClose(Packle::sPtr packle) {
-        int fd = packle->sessionID();
+        int fd = packle->fd();
         auto it = m_conns.find(fd);
         if (it == m_conns.end()) {
             LOG_WARN << "TcpServer::handleHalfClose: unknown fd";

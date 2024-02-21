@@ -12,6 +12,7 @@ namespace Oimo {
             char* buf = nullptr, size_t size = 0)
             : m_type(type)
             , m_source(source)
+            , m_fd(-1)
             , m_sessionID(0)
             , m_buf(buf)
             , m_size(size)
@@ -43,9 +44,10 @@ namespace Oimo {
             return v;
         }
 
-        void reset(uint16_t type = 0, uint32_t source = 0) {
+        void reset(uint16_t type = 0, uint32_t source = 0, int fd = -1) {
             m_type = type;
             m_source = source;
+            m_fd = fd;
             m_sessionID = 0;
             m_size = 0;
             m_isRet = false;
@@ -75,6 +77,14 @@ namespace Oimo {
             m_source = source;
         }
 
+        int fd() const {
+            return m_fd;
+        }
+
+        void setFd(int fd) {
+            m_fd = fd;
+        }
+
         void setBuf(char* buf) {
             if (m_buf) {
                 delete[] m_buf;
@@ -82,11 +92,11 @@ namespace Oimo {
             m_buf = buf;
         }
 
-        char* getAndResetBuf() {
-            char* buf = m_buf;
-            m_buf = nullptr;
-            m_size = 0;
-            return buf;
+        char* getAndResetBuf(char* buf = nullptr, size_t size = 0) {
+            char* b = m_buf;
+            m_buf = buf;
+            m_size = size;
+            return b;
         }
 
         void setSize(size_t size) {
@@ -112,6 +122,7 @@ namespace Oimo {
     private:
         uint16_t m_type;
         uint32_t m_source;
+        int m_fd;
         Coroutine::SessionID m_sessionID;
         char* m_buf;
         size_t m_size;

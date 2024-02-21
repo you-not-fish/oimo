@@ -28,7 +28,7 @@ namespace Net {
         int err = 0;
         do {
             if (m_revents & EPOLLHUP) {
-                LOG_DEBUG << "epoll hup event on fd " << m_fd
+                LOG_TRACE << "epoll hup event on fd " << m_fd
                         << ", socktype: " << SocketType2String(m_sockType)
                         << ", revents: " << eventsToStr(m_revents)
                         << ", events: " << eventsToStr(m_events);
@@ -55,7 +55,7 @@ namespace Net {
         if (err < 0) {
             Oimo::Packle::sPtr Packle = std::make_shared<Oimo::Packle>(
                 (Oimo::Packle::MsgID)SystemMsgID::ERROR);
-            Packle->setSessionID(m_fd);
+            Packle->setFd(m_fd);
             sendProto(Packle, m_serv);
         }
 
@@ -82,7 +82,7 @@ namespace Net {
             LOG_ERROR << "accept error: " << ::strerror(errno);
             return 0;
         }
-        LOG_DEBUG << "new connection from " << addr.ipAsString()
+        LOG_TRACE << "new connection from " << addr.ipAsString()
             << ":" << addr.portAsString();
         NetProto::NewConn newConn;
         newConn.set_fd(connFd);
@@ -113,16 +113,16 @@ namespace Net {
         if (n == 0) {
             if (m_sockType == SocketType::HALFCLOSE_READ ||
                 m_sockType == SocketType::CLOSE) {
-                LOG_DEBUG << "read endpoint has been closed";
+                LOG_TRACE << "read endpoint has been closed";
                 return 0;
             }
-            LOG_DEBUG << "peer has closed the connection";
+            LOG_TRACE << "peer has closed the connection";
             shutRead();
             disableRead();
             if (!m_closing) {
                 Oimo::Packle::sPtr packle = std::make_shared<Oimo::Packle>(
                     (Oimo::Packle::MsgID)SystemMsgID::CLOSEREAD);
-                packle->setSessionID(m_fd);
+                packle->setFd(m_fd);
                 sendProto(packle, m_serv);
             }
             return 0;
@@ -140,7 +140,7 @@ namespace Net {
         }
         Packle::sPtr packle = std::make_shared<Packle>(
             (Packle::MsgID)SystemMsgID::DATA);
-        packle->setSessionID(m_fd);
+        packle->setFd(m_fd);
         packle->setBuf(buf);
         packle->setSize(n);
         sendProto(packle, m_serv);
@@ -173,7 +173,7 @@ namespace Net {
     int SocketContext::handleWrite() {
         int ret = writeWB();
         if (m_closeSession) {
-            LOG_DEBUG << "all data sent, closing...";
+            LOG_TRACE << "all data sent, closing...";
             assert(m_closing);
             disableAll();
             m_sockType = SocketType::CLOSE;
@@ -186,7 +186,7 @@ namespace Net {
                 disableWrite();
             }
         } else if (ret == -1) {
-            LOG_DEBUG << "write error, closing...";
+            LOG_TRACE << "write error, closing...";
             shutWrite();
             disableWrite();
             return -1;
@@ -244,7 +244,7 @@ namespace Net {
             freeWB();
             sendClosedPackle(session);
         } else {
-            LOG_DEBUG << "data to send, closing after all data sent...";
+            LOG_TRACE << "data to send, closing after all data sent...";
             m_closeSession = session;
             if (!isWriting()) {
                 enableWrite();
@@ -263,7 +263,7 @@ namespace Net {
         Oimo::Packle::sPtr packle = std::make_shared<Oimo::Packle>(
             (Oimo::Packle::MsgID)SystemMsgID::CLOSED);
         packle->setSessionID(session);
-        packle->setSource(fd);
+        packle->setFd(fd);
         packle->setIsRet(true);
         sendProto(packle, serv);
     }

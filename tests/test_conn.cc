@@ -66,7 +66,7 @@ private:
 int main() {
     auto& app = Singleton<Application>::instance();
     app.init();
-    Logger::setLogLevel(LogLevel::DEBUG);
+    Logger::setLogLevel(LogLevel::TRACE);
     app.newService<EchoServer>("EchoServer");
     app.newService<NumService>("NumService");
     return app.run();

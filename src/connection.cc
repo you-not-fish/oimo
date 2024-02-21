@@ -101,6 +101,18 @@ namespace Net {
         return m_buffer.read(data, len);
     }
 
+    size_t Connection::recvN(char* data, size_t len) {
+        size_t n = 0;
+        while (n < len) {
+            size_t t = recv(data+n, len-n);
+            n += t;
+            if (t == 0) {
+                break;
+            }
+        }
+        return n;
+    }
+
     size_t Connection::append(const char* data, size_t len) {
         size_t n = m_buffer.write(data, len);
         assert(n == len);

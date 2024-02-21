@@ -21,7 +21,7 @@ public:
         char buf[1024];
         int cnt = 5;
         while (--cnt) {
-            int n = conn->recv(buf, 1024);
+            int n = conn->recv(buf, 10);
             if (n == 0) {
                 LOG_INFO << "connection closed by peer";
                 break;

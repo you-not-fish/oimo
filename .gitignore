@@ -3,3 +3,5 @@ build/
 bin/
 lib/
 include/
+*.pb.cc
+*.pb.h

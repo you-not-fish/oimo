@@ -30,6 +30,7 @@ namespace Net {
         size_t send(const char* data, size_t len);
         size_t send(Oimo::Packle::sPtr packle);
         size_t recv(char* data, size_t len);
+        size_t recvN(char* data, size_t len);
         size_t append(const char* data, size_t len);
         void setCloseFlag() {
             m_closing = true;

@@ -35,6 +35,10 @@ namespace Net {
         void setCloseFlag() {
             m_closing = true;
         }
+        size_t length() const {
+            return m_buffer.used();
+        }
+        bool isClosing() const;
     private:
         int sendToSocket(const char *buf, size_t len, bool needCopy);
         int m_fd;

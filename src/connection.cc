@@ -122,5 +122,13 @@ namespace Net {
         m_cors.clear();
         return n;
     }
+    
+    bool Connection::isClosing() const {
+        auto ctx = GSocketServer::instance().getSocketContext(m_fd);
+        if (!ctx->isValid()) {
+            return true;
+        }
+        return ctx->isClosing();
+    }
 } // Net
 } // Oimo

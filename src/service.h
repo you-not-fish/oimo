@@ -36,6 +36,9 @@ namespace Oimo {
         void send(T dest, Packle::sPtr packle) {
             m_context->send(dest, packle);
         }
+        void fork(Coroutine::CoroutineFunc func) {
+            m_context->fork(func);
+        }
         ServiceContext::ServiceID id() const {
             return m_context ? m_context->serviceID() : 0;
         }

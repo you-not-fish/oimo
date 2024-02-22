@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <any>
 #include "coroutine.h"
 
 namespace Oimo {
@@ -118,6 +119,8 @@ namespace Oimo {
         void setIsRet(bool isRet) {
             m_isRet = isRet;
         }
+
+        std::any userData;
 
     private:
         uint16_t m_type;

@@ -106,7 +106,7 @@ namespace Oimo {
                     returnCoroutine(coroutine);
                 }
             } else {
-                LOG_ERROR << "No handler for message type: " << packle->type();
+                LOG_ERROR << "Service " << name() << " has no handler for messageID: " << packle->type();
             }
         }
         ret(packle->source());

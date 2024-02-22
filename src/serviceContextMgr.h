@@ -12,6 +12,7 @@ namespace Oimo {
         static ServiceContext::sPtr getContext(const std::string& name);
         static ServiceContext::sPtr getContext(ServiceID id);
         static void registerContext(ServiceContext::sPtr context);
+        static void removeContext(ServiceID id);
     private:
         static std::map<std::string, ServiceContext::sPtr> namedContexts;
         static std::map<ServiceID, ServiceContext::sPtr> idContexts;

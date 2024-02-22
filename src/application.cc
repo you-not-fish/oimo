@@ -10,6 +10,7 @@
 #include "logThread.h"
 #include "socketThread.h"
 #include "workThread.h"
+#include "serviceContextMgr.h"
 
 namespace Oimo {
     Application::~Application() {
@@ -43,5 +44,38 @@ namespace Oimo {
         Singleton<Net::SocketThread>::instance().stop();
         Singleton<WorkThread>::instance().stop();
         Singleton<LogThread>::instance().stop();
+    }
+
+    Service::sPtr Application::getService(ServiceID id) const {
+        SpinLockGuard guard(lock);
+        auto it = services.find(id);
+        if (it != services.end()) {
+            return it->second;
+        }
+        return nullptr;
+    }
+
+    Application::ServiceMap Application::serviceMap() const {
+        SpinLockGuard guard(lock);
+        return services;
+    }
+
+    void Application::registerService(ServiceID id, Service::sPtr service) {
+        SpinLockGuard guard(lock);
+        auto it = services.find(id);
+        if (it != services.end()) {
+            LOG_ERROR << "Service: " << id << " already exists";
+            return;
+        }
+        services[id] = service;
+    }
+
+    void Application::removeService(ServiceID id) {
+        SpinLockGuard guard(lock);
+        auto it = services.find(id);
+        if (it != services.end()) {
+            ServiceContextMgr::removeContext(it->second->id());
+            services.erase(it);
+        }
     }
 }

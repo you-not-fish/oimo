@@ -23,7 +23,7 @@ namespace Oimo {
             SpinLockGuard guard(m_lock);
             return m_queue.empty();
         }
-        std::shared_ptr<ServiceContext> context() const {
+        std::weak_ptr<ServiceContext> context() const {
             return m_context;
         }
         bool isInGlobal() const {
@@ -41,7 +41,7 @@ namespace Oimo {
             setInGlobal(false);
         }
     private:
-        std::shared_ptr<ServiceContext> m_context;
+        std::weak_ptr<ServiceContext> m_context;
         bool m_isInGlobal;
         std::deque<Packle::sPtr> m_queue;
         SpinLock m_lock;

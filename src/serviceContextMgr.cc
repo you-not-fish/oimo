@@ -36,4 +36,13 @@ namespace Oimo {
         namedContexts[context->name()] = context;
         idContexts[context->serviceID()] = context;
     }
+
+    void ServiceContextMgr::removeContext(ServiceID id) {
+        SpinLockGuard guard(lock);
+        auto it = idContexts.find(id);
+        if (it != idContexts.end()) {
+            namedContexts.erase(it->second->name());
+            idContexts.erase(it);
+        }
+    }
 }

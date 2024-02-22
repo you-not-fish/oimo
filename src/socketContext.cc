@@ -132,7 +132,7 @@ namespace Net {
             delete[] buf;
             return 0;
         }
-        LOG_DEBUG << "read " << n << " bytes";
+        LOG_TRACE << "read " << n << " bytes";
         if (n == m_readSize) {
             m_readSize *= 2;
         } else if (n < m_readSize / 2) {

@@ -17,7 +17,7 @@ namespace Oimo {
         int run();
         void stop();
         template <typename T>
-        T& newService(const std::string& name) {
+        ServiceID newService(const std::string& name, std::string args = "") {
             static_assert(std::is_base_of<Service, T>::value, "T must be derived from Service");
             ServiceContext::sPtr context = ServiceContext::createContext(name);
             std::shared_ptr<T> service = std::make_shared<T>();
@@ -25,30 +25,16 @@ namespace Oimo {
             registerService(context->serviceID(), service);
             service->registerFunc((Packle::MsgID)SystemMsgID::INIT, std::bind(&T::init, service, std::placeholders::_1));
             Packle::sPtr packle = std::make_shared<Packle>((Packle::MsgID)SystemMsgID::INIT);
+            packle->userData = args;
             ServiceContext::send(context, packle);
             LOG_INFO << "Service: " << name << " created";
-            return *service;
+            return service->id();
         }
-        Service::sPtr getService(ServiceID id) const {
-            SpinLockGuard guard(lock);
-            auto it = services.find(id);
-            return it != services.end() ? it->second : nullptr;
-        }
-        ServiceMap serviceMap() const {
-            SpinLockGuard guard(lock);
-            return services;
-        }
+        Service::sPtr getService(ServiceID id) const;
+        ServiceMap serviceMap() const;
+        void removeService(ServiceID id);
     private:
-        void registerService(ServiceID id, Service::sPtr service) {
-            SpinLockGuard guard(lock);
-            auto it = services.find(id);
-            if (it == services.end()) {
-                services[id] = service;
-                return;
-            }
-            LOG_WARN << "Service ID: " << id << " already exists";
-            it->second = service;
-        }
+        void registerService(ServiceID id, Service::sPtr service);
         ServiceMap services;
         mutable SpinLock lock;
     };

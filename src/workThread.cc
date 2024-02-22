@@ -47,9 +47,12 @@ namespace Oimo {
             if (!G.empty()) {
                 PackleQueue::sPtr queue = G.pop();
                 std::deque<Packle::sPtr> que;
-                auto context = queue->context();
+                auto ctx = queue->context();
+                auto context = ctx.lock();
+                if (!context) {
+                    continue;
+                }
                 queue->swap(que);
-                assert(context);
                 ServiceContext::setCurrentContext(context);
                 context->doFork();
                 while (!que.empty()) {

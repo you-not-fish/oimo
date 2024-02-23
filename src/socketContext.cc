@@ -238,7 +238,7 @@ namespace Net {
         shutRead();
         disableRead();
         if (m_wbList.empty()) {
-            LOG_DEBUG << "no data to send, closing...";
+            LOG_TRACE << "no data to send, closing...";
             disableAll();
             m_sockType = SocketType::CLOSE;
             freeWB();

@@ -20,7 +20,8 @@ namespace Net {
     void EPoller::poll(std::vector<FdContext*>& activeFds) {
         int numEvents = ::epoll_wait(m_epfd, m_events.data(), m_events.size(), 1000);
         if (numEvents < 0) {
-            LOG_ERROR << "epoll_wait failed : " << strerror(errno);
+            // LOG_ERROR << "epoll_wait failed : " << strerror(errno);
+            return;
         }
         for (int i = 0; i < numEvents; ++i) {
             FdContext* ctx = static_cast<FdContext*>(m_events[i].data.ptr);

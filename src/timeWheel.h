@@ -10,6 +10,7 @@
 namespace Oimo {
     struct Timer {
         using sPtr = std::shared_ptr<Timer>;
+        using wPtr = std::weak_ptr<Timer>;
         uint32_t delay;
         uint32_t interval;
         uint32_t serv;
@@ -20,17 +21,17 @@ namespace Oimo {
 
     class TimeWheel {
     public:
-        using TimerList = std::list<Timer::sPtr>;
+        using TimerList = std::list<Timer::wPtr>;
         TimeWheel();
         ~TimeWheel();
 
         void run();
         void stop();
 
-        void addTimer(Timer::sPtr timer);
+        void addTimer(Timer::wPtr timer);
 
     private:
-        void add(Timer::sPtr timer);
+        void add(Timer::wPtr timer);
         void tick();
         void hold();
         void execute(uint32_t serv, uint16_t session);
@@ -40,7 +41,7 @@ namespace Oimo {
         int m_wheelSize;
         int m_interval;
         std::vector<TimerList> m_wheel;
-        std::vector<Timer::sPtr> m_timers;
+        std::vector<Timer::wPtr> m_timers;
         SpinLock m_lock;
     };
 

@@ -30,7 +30,7 @@ namespace Oimo {
         m_running = false;
     }
 
-    void TimeWheel::addTimer(Timer::sPtr timer) {
+    void TimeWheel::addTimer(Timer::wPtr timer) {
         SpinLockGuard guard(m_lock);
         m_timers.push_back(timer);
     }
@@ -42,13 +42,16 @@ namespace Oimo {
         std::this_thread::sleep_until(m_last);
     }
 
-    void TimeWheel::add(Timer::sPtr timer) {
+    void TimeWheel::add(Timer::wPtr wt) {
+        auto timer = wt.lock();
+        if (!timer) return;
+        // LOG_DEBUG << "timer use_count: " << timer.use_count() << ", add timer";
         uint32_t ticks = timer->delay ? (timer->delay - 1) / m_interval + 1 : 1;
         uint32_t level = (ticks - 1) / m_wheelSize;
         int slot = (m_cur + ticks) % m_wheelSize;
         timer->level = level;
         m_wheel[slot].push_back(timer);
-        LOG_DEBUG << "add timer, delay: " << timer->delay << ", interval: " << timer->interval
+        LOG_TRACE << "add timer, delay: " << timer->delay << ", interval: " << timer->interval
             << ", ticks: " << ticks << ", level: " << level
             << ", cur_index: " << m_cur << ", slot: " << slot;
     }
@@ -57,28 +60,34 @@ namespace Oimo {
         {
             SpinLockGuard guard(m_lock);
             for (auto& timer : m_timers) {
-                add(timer);
+                add(timer);\
+                // LOG_DEBUG << "timer use_count: " << timer.use_count() << ", add";
             }
             m_timers.clear();
         }
         m_cur = (m_cur + 1) % m_wheelSize;
         TimerList& list = m_wheel[m_cur];
         for (auto it = list.begin(); it != list.end();) {
-            Timer::sPtr timer = *it;
+            auto wt = *it;
+            auto timer = wt.lock();
+            if (!timer) {
+                it = list.erase(it);
+                continue;
+            }
             if (timer->level > 0) {
                 timer->level--;
                 it++;
                 continue;
             }
+            it = list.erase(it);
+            // LOG_DEBUG << "timer use_count: " << timer.use_count() << ", repeat";
             if (!timer.unique()) {
                 execute(timer->serv, timer->session);
                 if (timer->isRepeat()) {
-                    // LOG_DEBUG << "now : " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
                     timer->delay = timer->interval;
                     add(timer);
                 }    
             }
-            it = list.erase(it);
         }
     }
     

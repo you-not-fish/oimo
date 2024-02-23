@@ -17,7 +17,7 @@ namespace Oimo {
         int run();
         void stop();
         template <typename T>
-        ServiceID newService(const std::string& name, std::string args = "") {
+        ServiceID newService(const std::string& name, const std::string& args = "") {
             static_assert(std::is_base_of<Service, T>::value, "T must be derived from Service");
             ServiceContext::sPtr context = ServiceContext::createContext(name);
             std::shared_ptr<T> service = std::make_shared<T>();

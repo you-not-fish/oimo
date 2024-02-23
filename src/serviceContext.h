@@ -6,13 +6,16 @@
 #include <queue>
 #include <functional>
 #include "packle.h"
+#include "timeWheel.h"
 #include "queue.h"
 #include "coroutine.h"
 
 namespace Oimo {
     struct TimerContext {
         using sPtr = std::shared_ptr<TimerContext>;
+        using wPtr = std::weak_ptr<TimerContext>;
         Coroutine::sPtr cor;
+        Timer::sPtr timer;
         std::function<void()> callback;
         uint64_t id;
         uint32_t pending;
@@ -70,7 +73,7 @@ namespace Oimo {
             return m_suspendingPool.find(sessionID) != m_suspendingPool.end();
         }
     private:
-        void timerCallback(TimerContext::sPtr timer);
+        void timerCallback(TimerContext::wPtr timer);
         static thread_local ServiceContext::sPtr t_currentContext;
         std::string m_name;
         ServiceID m_serviceID;

@@ -2,7 +2,6 @@
 #include "serviceContextMgr.h"
 #include "log.h"
 #include "sysMsg.h"
-#include "timeWheel.h"
 namespace Oimo {
     thread_local ServiceContext::sPtr ServiceContext::t_currentContext = nullptr;
     thread_local ServiceContext::CoroutineQueue ServiceContext::t_freeQueue;
@@ -68,11 +67,13 @@ namespace Oimo {
             auto it = m_timers.find(id);
             if (it != m_timers.end()) {
                 auto ctx = it->second;
+                // LOG_DEBUG << "ctx use_count: " << ctx.use_count() << ", timer use_count: " << ctx->timer.use_count() << ", dispatch timer";
                 auto cor = ctx->cor;
                 if (cor->state() == Coroutine::CoroutineState::RUNNING) {
                     ctx->pending++;
                 } else {
                     cor->resume();
+                    // LOG_DEBUG << "ctx use_count: " << ctx.use_count() << ", timer use_count: " << ctx->timer.use_count() << ", resume timer";
                     if (!ctx->loop) {
                         m_timers.erase(it);
                     }
@@ -118,13 +119,13 @@ namespace Oimo {
         } else {
             Coroutine::sPtr coroutine = t_freeQueue.front();
             t_freeQueue.pop();
+            assert(coroutine->state() != Coroutine::CoroutineState::RUNNING);
             coroutine->reset(func);
             return coroutine;
         }
     }
     void ServiceContext::returnCoroutine(Coroutine::sPtr coroutine) {
         assert(coroutine);
-        assert(coroutine->state() != Coroutine::CoroutineState::RUNNING);
         t_freeQueue.push(coroutine);
     }
 
@@ -223,15 +224,21 @@ namespace Oimo {
         m_forkingQueue.push(coroutine);
     }
 
-    void ServiceContext::timerCallback(TimerContext::sPtr timer) {
-        assert(timer->cor == Coroutine::currentCoroutine());
+    void ServiceContext::timerCallback(TimerContext::wPtr ctx) {
+        // LOG_DEBUG << "ctx use_count: " << ctx.use_count() << ", timer callback";
         while (true) {
+            auto timer = ctx.lock();
+            if (!timer) return;
+            assert(timer->cor == Coroutine::currentCoroutine());
+            // LOG_DEBUG << "ctx use_count: " << timer.use_count() << ", timer use_count: " << timer->timer.use_count() << ", callback";
             timer->callback();
+            // LOG_DEBUG << "ctx use_count: " << timer.use_count() << ", timer use_count: " << timer->timer.use_count() << ", callback";
             if (!timer->loop) break;
             if (timer->pending > 0) {
                 timer->pending--;
                 continue;
             }
+            timer.reset();
             Coroutine::yieldToSuspend();
         }
     }
@@ -245,14 +252,17 @@ namespace Oimo {
         timer->serv = serviceID();
         timer->session = ++id;
         TimerContext::sPtr ctx = std::make_shared<TimerContext>();
+        ctx->timer = timer;
         ctx->callback = func;
         ctx->id = id;
         ctx->loop = interval > 0;
         ctx->pending = 0;
         m_timers[id] = ctx;
         if (func) {
+            // LOG_DEBUG << "ctx use_count: " << ctx.use_count() << ", timer use_count: " << ctx->timer.use_count() << ", create timer";
+            TimerContext::wPtr wctx = ctx;
             ctx->cor = getCoroutine(
-                std::bind(&ServiceContext::timerCallback, this, ctx)
+                std::bind(&ServiceContext::timerCallback, this, wctx)
             );
         } else {
             ctx->cor = Coroutine::currentCoroutine();
@@ -261,6 +271,7 @@ namespace Oimo {
         if (!func) {
             Coroutine::yieldToSuspend();
         }
+        // LOG_DEBUG << "ctx use_count: " << ctx.use_count() << ", timer use_count: " << ctx->timer.use_count() << ", add timer";
         return id;
     }
 
@@ -268,8 +279,11 @@ namespace Oimo {
         auto it = m_timers.find(id);
         if (it != m_timers.end()) {
             auto ctx = it->second;
+            // ctx->cor->setCallback(nullptr);
+            // ctx->timer = nullptr;
             returnCoroutine(ctx->cor);
             m_timers.erase(it);
+            // LOG_DEBUG << "ctx use_count: " << ctx.use_count() << ", timer use_count: " << ctx->timer.use_count() << ", remove timer";
         }
     }
 }

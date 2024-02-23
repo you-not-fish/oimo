@@ -31,6 +31,7 @@ namespace Oimo {
         void reset(CoroutineFunc func, uint32_t stackSize = 0);
         SessionID sid() const { return m_sid; }
         void setSid(SessionID sid) { m_sid = sid; }
+        void setCallback(CoroutineFunc func) { m_func = func; }
         static SessionID generateSid();
         static bool isMainCoroutine();
         static void resume(Coroutine::sPtr coroutine);

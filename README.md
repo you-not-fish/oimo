@@ -138,3 +138,10 @@ int main() {
     return app.run();
 }
 ```
+
+## 参考
+1. https://github.com/cloudwu/skynet
+2. https://github.com/chenshuo/muduo
+3. https://github.com/Tencent/libco
+4. https://github.com/sylar-yin/sylar
+5. https://github.com/Gooddbird/tinyrpc

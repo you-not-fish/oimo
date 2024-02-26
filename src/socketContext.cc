@@ -1,12 +1,12 @@
 #include <cassert>
 #include <errno.h>
 #include <sys/epoll.h>
+#include <tuple>
 #include "sysMsg.h"
 #include "socketState.h"
 #include "address.h"
 #include"epoller.h"
 #include "serviceContextMgr.h"
-#include "protobuf/newConn.pb.h"
 #include "log.h"
 #include "sysMsg.h"
 #include "socketContext.h"
@@ -85,13 +85,12 @@ namespace Net {
         
         LOG_TRACE << "new connection from " << addr.ipAsString()
             << ":" << addr.portAsString();
-        NetProto::NewConn newConn;
-        newConn.set_fd(connFd);
-        newConn.set_ip(addr.ipForNet());
-        newConn.set_port(addr.portForNet());
+        auto info = std::make_tuple(
+            connFd, addr.ipForNet(), addr.portForNet()
+        );
         Packle::sPtr packle = std::make_shared<Packle>(
             (Packle::MsgID)SystemMsgID::NEWCONN);
-        packle->serialize(newConn);
+        packle->userData = info;
         sendProto(packle, m_serv);
         return 0;
     }

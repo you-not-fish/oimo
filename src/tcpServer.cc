@@ -10,7 +10,6 @@
 #include "socketContext.h"
 #include "socketServer.h"
 #include "tcpServer.h"
-#include "protobuf/newConn.pb.h"
 
 namespace Oimo {
 namespace Net {
@@ -87,10 +86,12 @@ namespace Net {
     }
 
     void TcpServer::handleNewConn(Packle::sPtr packle) {
-        NetProto::NewConn newConn = packle->deserialize<NetProto::NewConn>();
-        int fd = newConn.fd();
-        uint32_t ip = newConn.ip();
-        uint16_t port = newConn.port();
+        auto info = std::any_cast<std::tuple<int, uint32_t, uint16_t>>(
+            packle->userData
+        );
+        int fd = std::get<0>(info);
+        uint32_t ip = std::get<1>(info);
+        uint16_t port = std::get<2>(info);
         Connection::sPtr conn = std::make_shared<Connection>(fd, ip, port, this);
         assert(m_conns.find(fd) == m_conns.end());
         addConn(fd, conn);

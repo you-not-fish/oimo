@@ -20,7 +20,7 @@ namespace Oimo {
 
     void Config::load(const std::string& filename)
     {
-        fprintf(stdout, "Loading config from %s\n", filename.c_str());
+        // fprintf(stdout, "Loading config from %s\n", filename.c_str());
         std::lock_guard<std::mutex> lock(m_mutex);
         m_map.clear();
         try {

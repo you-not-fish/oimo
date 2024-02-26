@@ -37,7 +37,7 @@
 3. 如果要进行网络监听，服务类中需要包含Oimo::Net::TcpServer成员，并在init方法中初始化；
 4. 实现服务类中的回调方法；
 5. 在main方法中用Application::init初始化框架，用Application::newService创建服务，用Application::run启动框架；
-###使用示例
+### 使用示例
 下面这个例子实现了一个简单功能，用户输入名字，查询自己的成绩.
 示例中有两个服务，QueryService接受网络数据，向DBService发起查询请求，并将查询结果返回给用户.
 

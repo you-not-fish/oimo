@@ -1,7 +1,7 @@
 # Oimo（更新中）
 ## 简介
 练手项目（更新到网络模块）
-高性能游戏服务器，也可作为web服务器，总体设计参考skynet的actor模式.基于此框架的游戏demo：[https://github.com/you-not-fish/oimo_demo]https://github.com/you-not-fish/oimo_demo
+高性能游戏服务器，也可作为web服务器，总体设计参考skynet的actor模式.基于此框架的游戏demo：[https://github.com/you-not-fish/oimo_demo](https://github.com/you-not-fish/oimo_demo)
 
 ## 技术要点
 1. **日志模块**：参考muoduo库，实现异步可回滚日志系统，日志前后端分离，临界区小且线程安全；
@@ -41,7 +41,7 @@
 下面这个例子实现了一个简单功能，用户输入名字，查询自己的成绩.
 示例中有两个服务，QueryService接受网络数据，向DBService发起查询请求，并将查询结果返回给用户.
 
-···cpp
+```cpp
 #include <application.h>
 #include <tcpServer.h>
 

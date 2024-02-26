@@ -27,9 +27,7 @@ namespace Oimo {
             YAML::Node node = YAML::LoadFile(filename);
             loadToMap("", node);
         }
-        catch (const YAML::Exception& e) {
-            fprintf(stderr, "YAML::Exception: %s\n", e.what());
-        }
+        catch (const YAML::Exception& e) {}
     }
 
     void Config::loadToMap(const std::string& prefix, const YAML::Node& node)

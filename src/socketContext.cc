@@ -82,6 +82,7 @@ namespace Net {
             LOG_ERROR << "accept error: " << ::strerror(errno);
             return 0;
         }
+        
         LOG_TRACE << "new connection from " << addr.ipAsString()
             << ":" << addr.portAsString();
         NetProto::NewConn newConn;
@@ -104,7 +105,8 @@ namespace Net {
                 if (errno == EINTR) {
                     continue;
                 }
-                LOG_ERROR << "read error: " << ::strerror(errno);
+                std::string err = ::strerror(errno);
+                LOG_ERROR << "read error: " << err; //::strerror(errno);
                 return -1;
             }
             break;

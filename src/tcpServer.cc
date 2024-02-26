@@ -57,6 +57,8 @@ namespace Net {
             ctx->reset(-1, 0);
             return -1;
         }
+        sock.setNonBlocking(true);
+        sock.setReuseAddr(true);
         ctx->setSockType(SocketType::PLISTEN);
         return m_listenFd;
     }
@@ -92,9 +94,12 @@ namespace Net {
         Connection::sPtr conn = std::make_shared<Connection>(fd, ip, port, this);
         assert(m_conns.find(fd) == m_conns.end());
         addConn(fd, conn);
-        auto ctx = Singleton<SocketServer>::instance().getSocketContext(fd);
+        auto ctx = GSocketServer::instance().getSocketContext(fd);
         assert(!ctx->isValid());
         ctx->reset(fd, m_serv->id());
+        auto sock = ctx->sock();
+        sock.setNonBlocking(true);
+        sock.setNoDelay(true);
         ctx->setSockType(SocketType::PACCEPT);
         assert(m_cb);
         m_cb(conn);

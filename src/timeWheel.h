@@ -34,7 +34,7 @@ namespace Oimo {
         void add(Timer::wPtr timer);
         void tick();
         void hold();
-        void execute(uint32_t serv, uint16_t session);
+        bool execute(uint32_t serv, uint16_t session);
         uint64_t m_cur;
         std::chrono::steady_clock::time_point m_last;
         bool m_running;

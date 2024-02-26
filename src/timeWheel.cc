@@ -82,7 +82,7 @@ namespace Oimo {
             it = list.erase(it);
             // LOG_DEBUG << "timer use_count: " << timer.use_count() << ", repeat";
             if (!timer.unique()) {
-                execute(timer->serv, timer->session);
+                if (!execute(timer->serv, timer->session)) continue;
                 if (timer->isRepeat()) {
                     timer->delay = timer->interval;
                     add(timer);
@@ -91,10 +91,14 @@ namespace Oimo {
         }
     }
     
-    void TimeWheel::execute(uint32_t serv, uint16_t session) {
+    bool TimeWheel::execute(uint32_t serv, uint16_t session) {
         Packle::sPtr packle = std::make_shared<Packle>((Packle::MsgID)SystemMsgID::TIMER);
         packle->setSessionID(session);
         auto ctx = ServiceContextMgr::getContext(serv);
+        if (!ctx) {
+            return false;
+        }
         ctx->messageQueue()->push(packle);
+        return true;
     }
 }

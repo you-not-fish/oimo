@@ -3,6 +3,7 @@
 namespace Oimo {
     enum class SystemMsgID {
         INIT = 0XFFFF,
+        RET = 0XFFFE,
         TIMER = 0XFF00,
         NEWCONN = 0XFF01,
         LISTENREADY = 0XFF02,

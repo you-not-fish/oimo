@@ -62,6 +62,8 @@ namespace Oimo {
             LOG_FATAL << "Coroutine should never be reset when running";
         }
         m_sid = 0;
+        m_reservSid = 0;
+        m_reservSrc = 0;
         m_func = func;
         if (stackSize) {
             if (m_stackSize != stackSize) {

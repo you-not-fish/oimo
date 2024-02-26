@@ -45,25 +45,25 @@ namespace Oimo {
         auto& G = Singleton<GlobalQueue>::instance();
         while(running) {
             if (!G.empty()) {
-                PackleQueue::sPtr queue = G.pop();
-                std::deque<Packle::sPtr> que;
-                auto ctx = queue->context();
+                auto que = G.pop();
+                if (!que) {
+                    continue;
+                }
+                que->startProcess();
+                auto ctx = que->context();
                 auto context = ctx.lock();
                 if (!context) {
                     continue;
                 }
-                queue->swap(que);
                 ServiceContext::setCurrentContext(context);
                 context->doFork();
-                while (!que.empty()) {
-                    Packle::sPtr packle = que.front();
-                    que.pop_front();
+                int size = (int)que->size();
+                for (int i = 0; i < size; ++i) {
+                    Packle::sPtr packle = que->pop();
                     assert(packle);
                     context->dispatch(packle);
                 }
-                if (context->hasFork() && !queue->isInGlobal()) {
-                    G.push(queue);
-                }
+                que->finishProcess(context->hasFork());
                 ServiceContext::setCurrentContext(nullptr);
             }
         }

@@ -54,6 +54,9 @@ namespace Net {
     }
 
     int Connection::sendToSocket(const char *buf, size_t len, bool needCopy) {
+        if (m_fd == -1) {
+            return -1;
+        }
         auto ctx = GSocketServer::instance().getSocketContext(m_fd);
         if (ctx->isClosing()) {
             return -1;

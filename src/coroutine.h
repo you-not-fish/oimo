@@ -31,6 +31,10 @@ namespace Oimo {
         void reset(CoroutineFunc func, uint32_t stackSize = 0);
         SessionID sid() const { return m_sid; }
         void setSid(SessionID sid) { m_sid = sid; }
+        SessionID reservSid() const { return m_reservSid; }
+        void setReservSid(SessionID sid) { m_reservSid = sid; }
+        uint32_t reservSrc() const { return m_reservSrc; }
+        void setReservSrc(uint32_t src) { m_reservSrc = src; }
         void setCallback(CoroutineFunc func) { m_func = func; }
         static SessionID generateSid();
         static bool isMainCoroutine();
@@ -50,6 +54,8 @@ namespace Oimo {
         static thread_local Coroutine::sPtr t_mainCoroutine;
         uint64_t m_id;
         SessionID m_sid {0};
+        SessionID m_reservSid {0};
+        uint32_t m_reservSrc {0};
         CoroutineFunc m_func;
         struct coctx m_ctx;
         uint32_t m_stackSize;

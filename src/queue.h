@@ -14,7 +14,8 @@ namespace Oimo {
         using sPtr = std::shared_ptr<PackleQueue>;
         PackleQueue(std::shared_ptr<ServiceContext> context = nullptr)
             : m_context(context)
-            , m_isInGlobal(false) {
+            , m_isInGlobal(false)
+            , m_isProcessing(false) {
         }
         ~PackleQueue() = default;
         void push(Packle::sPtr packle);
@@ -22,6 +23,10 @@ namespace Oimo {
         bool empty() {
             SpinLockGuard guard(m_lock);
             return m_queue.empty();
+        }
+        size_t size() {
+            SpinLockGuard guard(m_lock);
+            return m_queue.size();
         }
         std::weak_ptr<ServiceContext> context() const {
             return m_context;
@@ -32,17 +37,21 @@ namespace Oimo {
         void setInGlobal(bool isInGlobal) {
             m_isInGlobal = isInGlobal;
         }
+        bool isProcessing() const {
+            return m_isProcessing;
+        }
+        void setProcessing(bool isProcessing) {
+            m_isProcessing = isProcessing;
+        }
         void setContext(std::shared_ptr<ServiceContext> context) {
             m_context = context;
         }
-        void swap(std::deque<Packle::sPtr>& other) {
-            SpinLockGuard guard(m_lock);
-            other.swap(m_queue);
-            setInGlobal(false);
-        }
+        void startProcess();
+        void finishProcess(bool isForked);
     private:
         std::weak_ptr<ServiceContext> m_context;
         bool m_isInGlobal;
+        bool m_isProcessing;
         std::deque<Packle::sPtr> m_queue;
         SpinLock m_lock;
     };
@@ -52,18 +61,19 @@ namespace Oimo {
         using sPtr = std::shared_ptr<GlobalQueue>;
         GlobalQueue() = default;
         ~GlobalQueue() = default;
-        void push(PackleQueue::sPtr packleQueue) {
+        void push(PackleQueue::sPtr que) {
             SpinLockGuard guard(m_lock);
-            m_queue.push_back(packleQueue);
+            m_queue.push_back(que);
+            que->setInGlobal(true);
         }
         PackleQueue::sPtr pop() {
             SpinLockGuard guard(m_lock);
             if (m_queue.empty()) {
                 return nullptr;
             }
-            auto packleQueue = m_queue.front();
+            auto que = m_queue.front();
             m_queue.pop_front();
-            return packleQueue;
+            return que;
         }
         bool empty() {
             SpinLockGuard guard(m_lock);

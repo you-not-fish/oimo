@@ -23,11 +23,22 @@ namespace Oimo {
             std::shared_ptr<T> service = std::make_shared<T>();
             service->setContext(context);
             registerService(context->serviceID(), service);
-            service->registerFunc((Packle::MsgID)SystemMsgID::INIT, std::bind(&T::init, service, std::placeholders::_1));
+            service->registerFunc((Packle::MsgID)SystemMsgID::INIT, std::bind(&T::handleInit, service, std::placeholders::_1));
             Packle::sPtr packle = std::make_shared<Packle>((Packle::MsgID)SystemMsgID::INIT);
             packle->userData = args;
-            ServiceContext::send(context, packle);
-            LOG_INFO << "Service: " << name << " created";
+            if (Coroutine::isMainCoroutine()) {
+                ServiceContext::send(context, packle);
+                std::unique_lock<std::mutex> lock(service->m_lock);
+                service->m_cond.wait_for(
+                    lock, std::chrono::microseconds(100),
+                    [service] {
+                        return service->inited.load();
+                    }
+                );
+            } else {
+                ServiceContext::call(context, packle);
+            }
+            LOG_INFO << "Service: " << name << " launched. ID: " << service->id();
             return service->id();
         }
         Service::sPtr getService(ServiceID id) const;

@@ -43,7 +43,7 @@ namespace Oimo {
         void setServiceID(ServiceID serviceID) { m_serviceID = serviceID; }
         std::string name() const { return m_name; }
         void setName(std::string name) { m_name = name; }
-        void setReturnPackle(Packle::sPtr packle) { m_returnPackle = packle;}
+        void setReturnPackle(Packle::sPtr packle);
         Packle::sPtr returnPackle() const { return m_returnPackle; }
         void setResponsePackle(Packle::sPtr packle) { m_responsePackle = packle; }
         Packle::sPtr responsePackle() const { return m_responsePackle; }

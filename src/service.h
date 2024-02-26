@@ -1,12 +1,12 @@
 #pragma once
 
 #include <memory>
-#include <iostream>
 #include "serviceContext.h"
 
 namespace Oimo {
     class Service {
     public:
+        friend class Application;
         using sPtr = std::shared_ptr<Service>;
         Service(ServiceContext::sPtr context = nullptr) : m_context(context) {
         }
@@ -55,6 +55,10 @@ namespace Oimo {
             m_context->setReturnPackle(packle);
         }
     private:
+        void handleInit(Packle::sPtr packle);
+        std::mutex m_lock;
+        std::condition_variable m_cond;
+        std::atomic_bool inited {false};
         ServiceContext::sPtr m_context;
     };
 }

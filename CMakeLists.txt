@@ -24,13 +24,14 @@ target_link_libraries(oimo yaml-cpp)
 set_target_properties(
     oimo PROPERTIES ARCHIVE_OUTPUT_DIRECTORY "${LIB_OUTPUT}")
 
-file(GLOB TEST_PROTO_SOURCES "tests/protobuf/*.cc")
-file(GLOB TEST_SOURCES "tests/*.cc")
-find_package(Protobuf REQUIRED)
-foreach(testsourcefile ${TEST_SOURCES})
-    get_filename_component(testname ${testsourcefile} NAME_WE)
-    add_executable(${testname} ${testsourcefile} ${TEST_PROTO_SOURCES})
-    target_link_libraries(${testname} oimo protobuf::libprotobuf)
-    set_target_properties(
-        ${testname} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TEST_OUTPUT}")
-endforeach(testsourcefile ${TEST_SOURCES})
+# protobuf is required for tests
+# file(GLOB TEST_PROTO_SOURCES "tests/protobuf/*.cc")
+# file(GLOB TEST_SOURCES "tests/*.cc")
+# find_package(Protobuf REQUIRED)
+# foreach(testsourcefile ${TEST_SOURCES})
+#     get_filename_component(testname ${testsourcefile} NAME_WE)
+#     add_executable(${testname} ${testsourcefile} ${TEST_PROTO_SOURCES})
+#     target_link_libraries(${testname} oimo protobuf::libprotobuf)
+#     set_target_properties(
+#         ${testname} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TEST_OUTPUT}")
+# endforeach(testsourcefile ${TEST_SOURCES})

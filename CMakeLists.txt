@@ -25,13 +25,25 @@ set_target_properties(
     oimo PROPERTIES ARCHIVE_OUTPUT_DIRECTORY "${LIB_OUTPUT}")
 
 # protobuf is required for tests
-# file(GLOB TEST_PROTO_SOURCES "tests/protobuf/*.cc")
-# file(GLOB TEST_SOURCES "tests/*.cc")
-# find_package(Protobuf REQUIRED)
-# foreach(testsourcefile ${TEST_SOURCES})
-#     get_filename_component(testname ${testsourcefile} NAME_WE)
-#     add_executable(${testname} ${testsourcefile} ${TEST_PROTO_SOURCES})
-#     target_link_libraries(${testname} oimo protobuf::libprotobuf)
-#     set_target_properties(
-#         ${testname} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TEST_OUTPUT}")
-# endforeach(testsourcefile ${TEST_SOURCES})
+file(GLOB TEST_SOURCES "tests/*.cc")
+find_package(Protobuf REQUIRED)
+file(GLOB PROTO_FILES "${CMAKE_CURRENT_SOURCE_DIR}/tests/protobuf/*.proto")
+set(PROTO_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tests/protobuf")
+execute_process(
+    COMMAND ${Protobuf_PROTOC_EXECUTABLE}
+    --proto_path=${PROTO_SRC_DIR}
+    --cpp_out=${PROTO_SRC_DIR}
+    ${PROTO_FILES}
+    )
+file(GLOB ALL_PROTO_SRCS "${PROTO_SRC_DIR}/*.cc")
+foreach(testsourcefile ${TEST_SOURCES})
+    get_filename_component(testname ${testsourcefile} NAME_WE)
+    add_executable(
+        ${testname}
+        ${testsourcefile}
+        ${ALL_PROTO_SRCS}
+        )
+    target_link_libraries(${testname} oimo protobuf::libprotobuf)
+    set_target_properties(
+        ${testname} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TEST_OUTPUT}")
+endforeach()

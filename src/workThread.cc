@@ -9,7 +9,7 @@ namespace Oimo {
 
     bool WorkThread::running = false;
     WorkThread::WorkThread() {
-        int n = Singleton<Config>::instance().getInt("thread.workthread_count", 6);
+        int n = Singleton<Config>::instance().getInt("thread.workthread_count", 4);
         for (int i = 0; i < n; ++i) {
             m_threads.push_back(
                 std::make_shared<Thread>(
